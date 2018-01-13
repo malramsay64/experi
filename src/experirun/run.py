@@ -11,7 +11,8 @@
 import subprocess
 from collections import ChainMap
 from itertools import product
-from typing import Any, Dict, List, Union, Iterator, Callable
+from typing import (Any, Callable, Dict, Hashable, Iterable, Iterator, List,
+                    Union)
 
 import yaml
 
@@ -52,6 +53,11 @@ def variable_matrix(variables: Dict[str, Any],
         yield {parent: variables}
 
 
+# TODO update type inference for this when issues in mypy are closed
+def uniqueify(my_list: Any) -> List[Any]:
+    return list(dict.fromkeys(my_list))
+
+
 def process_command(commands: Union[str, List[str]],
                     matrix: List[Dict[str, Any]]) -> Iterator[List[str]]:
     # Ensure commands is a list
@@ -60,7 +66,8 @@ def process_command(commands: Union[str, List[str]],
 
     for command in commands:
         # substitute variables into command
-        yield [command.format(**kwargs) for kwargs in matrix]
+        c_list = [command.format(**kwargs) for kwargs in matrix]
+        yield uniqueify(c_list)
 
 
 def read_file(filename: str='experiment.yml') -> Dict['str', Any]:

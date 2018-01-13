@@ -78,6 +78,16 @@ test_cases = [
         [['echo 1 11 1', 'echo 1 12 2', 'echo 2 13 1',
           'echo 2 14 2', 'echo 3 15 1', 'echo 3 16 2']],
      ),
+    # Test unique commands
+    (
+        {'command': 'echo {var1}',
+         'variables': {
+             'var1': [1, 2, 3],
+             'var2': [4, 5],
+         }},
+     [['echo 1', 'echo 2', 'echo 3']]
+     ),
+
 ]
 
 
