@@ -11,7 +11,7 @@
 import subprocess
 from collections import ChainMap
 from itertools import product
-from typing import Any, Dict, List, Union, Iterator
+from typing import Any, Dict, List, Union, Iterator, Callable
 
 import yaml
 
@@ -20,8 +20,10 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
 
 
-def variable_matrix(variables: Dict[str, Any], parent: str=None, iterator='product') -> Iterator[Dict[str, Any]]:
-    _iters = {'product': product, 'zip': zip}
+def variable_matrix(variables: Dict[str, Any],
+                    parent: str=None,
+                    iterator='product') -> Iterator[Dict[str, Any]]:
+    _iters: Dict[str, Callable] = {'product': product, 'zip': zip}
 
     if isinstance(variables, dict):
         key_vars = []
@@ -50,7 +52,8 @@ def variable_matrix(variables: Dict[str, Any], parent: str=None, iterator='produ
         yield {parent: variables}
 
 
-def process_command(commands: Union[str, List[str]], matrix: List[Dict[str, Any]]) -> Iterator[List[str]]:
+def process_command(commands: Union[str, List[str]],
+                    matrix: List[Dict[str, Any]]) -> Iterator[List[str]]:
     # Ensure commands is a list
     if isinstance(commands, str):
         commands = [commands]
@@ -72,10 +75,9 @@ def main() -> None:
 
     # create variable matrix
     variables = list(variable_matrix(structure.get('variables')))
-    assert len(variables) > 0
+    assert variables
 
     # Process and run commands
     for command_group in process_command(structure.get('command'), variables):
         for command in command_group:
             subprocess.run(command.split())
-
