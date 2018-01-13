@@ -6,10 +6,13 @@
 #
 # Distributed under terms of the MIT license.
 
-"""Test the behaviour of the looping through variables."""
+"""Test the behaviour of the looping through variables.
+
+This is a series of tests that are defining the interface of the module,
+primarily the iteration of the variables."""
 
 import pytest
-from experirun.run import process
+from experirun.run import process_command
 
 test_cases = [
     {
@@ -47,4 +50,4 @@ test_cases = [
 
 @pytest.mark.parametrize('test', test_cases)
 def test_behaviour(test):
-    assert process(test['test']) == test['result']
+    assert process_command(test['test']) == test['result']

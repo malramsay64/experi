@@ -22,6 +22,7 @@ setup(
     include_package_data=True,
     entry_points="""
         [console_scripts]
+        experirun=experirun.run:main
     """,
     url='',
     author='Malcolm Ramsay',

@@ -12,6 +12,10 @@ from itertools import product
 from string import Formatter
 from typing import Any, Dict, List
 from collections import ChainMap
+from subprocess import call
+from os import PathLike
+
+import yaml
 
 
 def collect_format_vars(string: str) -> List[str]:
@@ -48,7 +52,7 @@ def variable_matrix(variables: Dict[str, Any], parent: str=None) -> Dict[str, An
         yield {parent: variables}
 
 
-def process(structure):
+def process_command(structure: Dict[str, Any]) -> List[str]:
     # Create variable matrix
     matrix = variable_matrix(structure.get('variables'))
 
@@ -57,3 +61,21 @@ def process(structure):
 
     # substitute variables into command
     return [structure.get('command').format(**kwargs) for kwargs in matrix]
+
+
+def read_file(filename: PathLike='experiment.yml') -> Dict['str', Any]:
+    with open(filename, 'r') as stream:
+        structure = yaml.load(stream)
+    return structure
+
+
+def main() -> None:
+    # Read input file
+    structure = read_file()
+
+    # Process commands
+    commands = process_command(structure)
+
+    # Run commands
+    for command in commands:
+        call(command.split())
