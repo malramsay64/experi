@@ -20,22 +20,29 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
 
 
-def variable_matrix(variables: Dict[str, Any], parent: str=None) -> Iterator[Dict[str, Any]]:
+def variable_matrix(variables: Dict[str, Any], parent: str=None, iterator='product') -> Iterator[Dict[str, Any]]:
+    _iters = {'product': product, 'zip': zip}
+
     if isinstance(variables, dict):
         key_vars = []
+        # Check for iterator variable and remove if nessecary
+        # changing the value of the iterator for remaining levels.
+        if variables.get('iterator'):
+            iterator = variables.get('iterator')
+            del variables['iterator']
         for key, value in variables.items():
             # The case where we have a dictionary representing a
             # variable's value, the value is stored in 'value'.
             if key == 'value':
                 key = parent
-            key_vars.append(list(variable_matrix(value, key)))
+            key_vars.append(list(variable_matrix(value, key, iterator)))
         # Iterate through all possible products generating a dictionary
-        for i in product(*key_vars):
+        for i in _iters[iterator](*key_vars):
             yield combine_dictionaries(i)
 
     elif isinstance(variables, list):
         for item in variables:
-            yield from variable_matrix(item, parent)
+            yield from variable_matrix(item, parent, iterator)
 
     # Stopping condition -> we have either a single value from a list
     # or a value had only one item
