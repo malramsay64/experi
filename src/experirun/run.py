@@ -11,8 +11,7 @@
 import subprocess
 from collections import ChainMap
 from itertools import product
-from os import PathLike
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union, Iterator
 
 import yaml
 
@@ -21,7 +20,7 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
 
 
-def variable_matrix(variables: Dict[str, Any], parent: str=None) -> Dict[str, Any]:
+def variable_matrix(variables: Dict[str, Any], parent: str=None) -> Iterator[Dict[str, Any]]:
     if isinstance(variables, dict):
         key_vars = []
         for key, value in variables.items():
@@ -44,15 +43,17 @@ def variable_matrix(variables: Dict[str, Any], parent: str=None) -> Dict[str, An
         yield {parent: variables}
 
 
-def process_command(structure: Dict[str, Any]) -> List[str]:
-    # Create variable matrix
-    matrix = variable_matrix(structure.get('variables'))
+def process_command(commands: Union[str, List[str]], matrix: List[Dict[str, Any]]) -> Iterator[List[str]]:
+    # Ensure commands is a list
+    if isinstance(commands, str):
+        commands = [commands]
 
-    # substitute variables into command
-    return [structure.get('command').format(**kwargs) for kwargs in matrix]
+    for command in commands:
+        # substitute variables into command
+        yield [command.format(**kwargs) for kwargs in matrix]
 
 
-def read_file(filename: PathLike='experiment.yml') -> Dict['str', Any]:
+def read_file(filename: str='experiment.yml') -> Dict['str', Any]:
     with open(filename, 'r') as stream:
         structure = yaml.load(stream)
     return structure
@@ -62,9 +63,12 @@ def main() -> None:
     # Read input file
     structure = read_file()
 
-    # Process commands
-    commands = process_command(structure)
+    # create variable matrix
+    variables = list(variable_matrix(structure.get('variables')))
+    assert len(variables) > 0
 
-    # Run commands
-    for command in commands:
-        subprocess.run(command.split())
+    # Process and run commands
+    for command_group in process_command(structure.get('command'), variables):
+        for command in command_group:
+            subprocess.run(command.split())
+
