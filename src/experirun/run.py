@@ -16,6 +16,8 @@ from typing import (Any, Callable, Dict, Hashable, Iterable, Iterator, List,
 
 import yaml
 
+from .pbs import create_pbs_file
+
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
@@ -75,16 +77,28 @@ def read_file(filename: str='experiment.yml') -> Dict['str', Any]:
         structure = yaml.load(stream)
     return structure
 
-
-def main() -> None:
+def process_file(filename: str='experiment.yml') -> List[str]:
     # Read input file
-    structure = read_file()
+    structure = read_file(filename)
 
     # create variable matrix
     variables = list(variable_matrix(structure.get('variables')))
     assert variables
 
+    command_groups = process_command(structure.get('command'), variables)
+
+    # Check for pbs options
+    if structure.get('pbs'):
+        if structure.get('name'):
+            structure['pbs'].setdefault('name', structure.get('name'))
+        return [create_pbs_file(command_group, structure.get('pbs'))
+                for command_group in command_groups]
+
+    return command_groups
+
+
+def main() -> None:
     # Process and run commands
-    for command_group in process_command(structure.get('command'), variables):
+    for command_group in process_file():
         for command in command_group:
             subprocess.run(command.split())

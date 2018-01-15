@@ -87,6 +87,14 @@ test_cases = [
          }},
      [['echo 1', 'echo 2', 'echo 3']]
      ),
+    # Test string variables
+    (
+        {'command': 'echo {var1}',
+         'variables': {
+             'var1': ['test', 'string', 'types'],
+         }},
+     [['echo test', 'echo string', 'echo types']]
+     ),
 ]
 
 
