@@ -12,8 +12,8 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='experirun',
-    version='0.0.1',
+    name='experi',
+    version='0.0.8',
     python_requires='>=3.6',
     setup_requires=[],
     install_requires=[],
