@@ -29,6 +29,7 @@ COMMAND=("echo 1" \\\n)
 "${COMMAND[$PBS_ARRAY_INDEX]}"
 """
 
+
 @pytest.mark.parametrize('command, result', [
     (['echo 1'], '("echo 1" \\\n)'),
     (['echo 1', 'echo 2'], '("echo 1" \\\n"echo 2" \\\n)')
@@ -36,11 +37,14 @@ COMMAND=("echo 1" \\\n)
 def test_commands2bash(command, result):
     assert commands2bash_array(command) == result
 
+
 def test_default_pbs():
     assert create_pbs_file(['echo 1'], {}) == DEFAULT_PBS
 
+
 def test_pbs_creation():
     directory = Path('test/data/pbs')
-    created = process_file(directory / 'experiment.yml')
-    with open(directory / 'result.txt') as expected:
-        assert created[0] == expected.read()
+    process_file(directory / 'experiment.yml')
+    with open(directory / 'result.txt', 'r') as expected:
+        with open('experi_00.pbs', 'r') as result:
+            assert result.read() == expected.read()
