@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from experirun.pbs import commands2bash_array, create_pbs_file
-from experirun.run import process_file
+from experi.pbs import commands2bash_array, create_pbs_file
+from experi.run import process_file
 
 
 DEFAULT_PBS = """#!/bin/bash

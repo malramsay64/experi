@@ -12,7 +12,7 @@ This is a series of tests that are defining the interface of the module,
 primarily the iteration of the variables."""
 
 import pytest
-from experirun.run import process_command, variable_matrix
+from experi.run import process_command, variable_matrix
 
 test_cases = [
     # Test the most basic behaviour, iterating through a list
