@@ -14,9 +14,11 @@ from itertools import product
 from typing import (Any, Callable, Dict, Hashable, Iterable, Iterator, List,
                     Union)
 
-import yaml
+from ruamel.yaml import YAML
 
 from .pbs import create_pbs_file
+
+yaml = YAML()
 
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
