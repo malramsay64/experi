@@ -104,6 +104,7 @@ def process_file(filename: PathLike='experiment.yml') -> None:
     filename = Path(filename)
 
     # Read input file
+    logger.debug('Reading file %s', filename)
     structure = read_file(filename)
 
     # create variable matrix
@@ -159,11 +160,11 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
 
     """
     submit_job = True
+    logger.debug('Creating commands in pbs files.')
     # Check qsub exists
     if shutil.which('qsub') is None:
-        print('The `qsub` command is not found.'
-              'Skipping job submission and just generating files',
-              file=sys.stderr)
+        logger.warning('The `qsub` command is not found.'
+                       'Skipping job submission and just generating files')
         submit_job = False
 
     # Ensure directory is a Path
