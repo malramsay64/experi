@@ -100,21 +100,22 @@ def process_file(filename: str='experiment.yml') -> None:
         run_pbs_commands(command_groups, structure.get('pbs'))
         return
 
-    for command_group in command_groups:
-        run_bash_commands(command_group)
+    run_bash_commands(command_groups)
     return
 
 
-def run_bash_commands(command_group: List[str]) -> None:
-    # Check command works
-    if shutil.which(command_group[0].split()[0]) is None:
-        raise ProcessLookupError('Command `{}` was not found, check your PATH.')
+def run_bash_commands(command_groups: Iterator[List[str]]) -> None:
+    # iterate through command groups
+    for command_group in command_groups:
+        # Check command works
+        if shutil.which(command_group[0].split()[0]) is None:
+            raise ProcessLookupError('Command `{}` was not found, check your PATH.')
 
-    for command in command_group:
-        try:
-            subprocess.check_call(command.split())
-        except ProcessLookupError:
-            print('Command failed: check PATH is correctly set\n', command)
+        for command in command_group:
+            try:
+                subprocess.run(command.split(), check=True)
+            except ProcessLookupError:
+                print('Command failed: check PATH is correctly set\n', command)
 
 
 def run_pbs_commands(command_groups: List[str],
