@@ -18,6 +18,7 @@ from itertools import product
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Union
 
+import click
 from ruamel.yaml import YAML
 
 from .pbs import create_pbs_file
@@ -197,6 +198,11 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
             prev_jobid = cmd_res.stdout
 
 
-def main() -> None:
+@click.command()
+@click.option('-f', '--input-file',
+              type=click.Path(exists=True, dir_okay=False),
+              default='experiment.yml',
+              )
+def main(input_file) -> None:
     # Process and run commands
-    process_file()
+    process_file(input_file)
