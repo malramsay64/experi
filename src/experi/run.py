@@ -8,6 +8,7 @@
 
 """Run an experiment varying a number of variables."""
 
+import logging
 import os
 import shutil
 import subprocess
@@ -24,14 +25,28 @@ from .pbs import create_pbs_file
 yaml = YAML()
 PathLike = Union[str, Path]
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Merge a list of dictionaries into a single dictionary.
+
+    Where there are collisions the first value in the list will be set
+    as this function is using ChainMap to combine the dicts.
+    """
     return dict(ChainMap(*dicts))
 
 
 def variable_matrix(variables: Dict[str, Any],
                     parent: str=None,
                     iterator='product') -> Iterator[Dict[str, Any]]:
+    """Process the variables into a list of the appropriate combinations.
+
+    This function performs recursive processing of the input variables, creating an iterator which
+    has all the combinations of varaibles specified in the input.
+
+    """
     _iters: Dict[str, Callable] = {'product': product, 'zip': zip}
 
     if isinstance(variables, dict):
@@ -100,6 +115,7 @@ def process_file(filename: PathLike='experiment.yml') -> None:
     # Check for pbs options
     if structure.get('pbs'):
         if structure.get('name'):
+            # set the name attribute in pbs to global name if no name defined in pbs
             structure['pbs'].setdefault('name', structure.get('name'))
         run_pbs_commands(command_groups, structure.get('pbs'), filename.parent)
         return
