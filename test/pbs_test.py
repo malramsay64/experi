@@ -22,6 +22,7 @@ DEFAULT_PBS = """#!/bin/bash
 #PBS -l walltime=1:00
 #PBS -J 1
 
+cd "$PBS_O_WORKDIR"
 
 
 COMMAND=("echo 1" \\\n)
@@ -46,5 +47,5 @@ def test_pbs_creation():
     directory = Path('test/data/pbs')
     process_file(directory / 'experiment.yml')
     with open(directory / 'result.txt', 'r') as expected:
-        with open('experi_00.pbs', 'r') as result:
+        with open(directory / 'experi_00.pbs', 'r') as result:
             assert result.read() == expected.read()

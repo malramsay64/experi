@@ -101,14 +101,16 @@ def process_file(filename: PathLike='experiment.yml') -> None:
     if structure.get('pbs'):
         if structure.get('name'):
             structure['pbs'].setdefault('name', structure.get('name'))
-        run_pbs_commands(command_groups, structure.get('pbs'))
+        run_pbs_commands(command_groups, structure.get('pbs'), filename.parent)
         return
 
-    run_bash_commands(command_groups)
+    run_bash_commands(command_groups, filename.parent)
     return
 
 
-def run_bash_commands(command_groups: Iterator[List[str]]) -> None:
+def run_bash_commands(command_groups: Iterator[List[str]],
+                      directory: PathLike=Path.cwd()) -> None:
+    logger.debug('Running commands in bash shell')
     # iterate through command groups
     for command_group in command_groups:
         # Check command works
@@ -117,13 +119,14 @@ def run_bash_commands(command_groups: Iterator[List[str]]) -> None:
 
         for command in command_group:
             try:
-                subprocess.run(command.split(), check=True)
+                subprocess.run(command.split(), check=True, cwd=directory)
             except ProcessLookupError:
                 print('Command failed: check PATH is correctly set\n', command)
 
 
 def run_pbs_commands(command_groups: Iterator[List[str]],
                      pbs_options: Dict[str, Any],
+                     directory: PathLike=Path.cwd(),
                      basename: str='experi') -> None:
     """Submit a series of commands to a batch scheduler.
 
@@ -147,8 +150,11 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
               file=sys.stderr)
         submit_job = False
 
+    # Ensure directory is a Path
+    directory = Path(directory)
+
     # remove existing files
-    for fname in Path.cwd().glob(basename+'*.pbs'):
+    for fname in directory.glob(basename+'*.pbs'):
         print('Removing {}'.format(fname))
         os.remove(fname)
 
@@ -158,7 +164,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
         # Generate pbs file
         content = create_pbs_file(command_group, pbs_options)
         # Write file to disk
-        fname = '{}_{:02d}.pbs'.format(basename, index)
+        fname = Path(directory / '{}_{:02d}.pbs'.format(basename, index))
         with open(fname, 'w') as dst:
             dst.write(content)
 
@@ -169,7 +175,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
                 submit_cmd += '-W depend=afterok:{} '.format(prev_jobid)
             submit_cmd += str(fname)
             # acutally run the command
-            cmd_res = subprocess.call(submit_cmd.split())
+            cmd_res = subprocess.run(submit_cmd.split(), cwd=directory)
             assert cmd_res.returncode == 0, 'Submitting a job to the queue failed.'
             prev_jobid = cmd_res.stdout
 

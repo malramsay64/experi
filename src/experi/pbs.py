@@ -23,6 +23,7 @@ PBS_FILE = """#!/bin/bash
 #PBS -l walltime={walltime}
 #PBS -J {num_jobs}
 
+cd "$PBS_O_WORKDIR"
 {setup}
 
 COMMAND={command_list}
