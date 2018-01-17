@@ -22,6 +22,7 @@ from ruamel.yaml import YAML
 from .pbs import create_pbs_file
 
 yaml = YAML()
+PathLike = Union[str, Path]
 
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -77,13 +78,16 @@ def process_command(commands: Union[str, List[str]],
         yield uniqueify(c_list)
 
 
-def read_file(filename: str='experiment.yml') -> Dict['str', Any]:
+def read_file(filename: PathLike='experiment.yml') -> Dict['str', Any]:
     with open(filename, 'r') as stream:
         structure = yaml.load(stream)
     return structure
 
 
-def process_file(filename: str='experiment.yml') -> None:
+def process_file(filename: PathLike='experiment.yml') -> None:
+    # Ensure filename is a Path
+    filename = Path(filename)
+
     # Read input file
     structure = read_file(filename)
 
@@ -118,7 +122,7 @@ def run_bash_commands(command_groups: Iterator[List[str]]) -> None:
                 print('Command failed: check PATH is correctly set\n', command)
 
 
-def run_pbs_commands(command_groups: List[str],
+def run_pbs_commands(command_groups: Iterator[List[str]],
                      pbs_options: Dict[str, Any],
                      basename: str='experi') -> None:
     """Submit a series of commands to a batch scheduler.
@@ -163,7 +167,7 @@ def run_pbs_commands(command_groups: List[str],
             submit_cmd = 'qsub '
             if index > 0:
                 submit_cmd += '-W depend=afterok:{} '.format(prev_jobid)
-            submit_cmd += fname
+            submit_cmd += str(fname)
             # acutally run the command
             cmd_res = subprocess.call(submit_cmd.split())
             assert cmd_res.returncode == 0, 'Submitting a job to the queue failed.'

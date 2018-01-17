@@ -13,7 +13,7 @@ list of commands. The variables will be generated and iterated over using the jo
 pbs.
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Mapping
 from collections import ChainMap
 
 
@@ -45,7 +45,7 @@ def parse_setup(options: Union[List, str]) -> str:
 
 
 def create_pbs_file(command_group: List[str],
-                    pbs_options: Dict[str, Any]) -> str:
+                    pbs_options: Mapping[str, Any]) -> str:
     default_options = {
         'walltime': '1:00',
         'cpus': '1',
