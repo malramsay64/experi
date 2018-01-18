@@ -11,8 +11,8 @@
 import logging
 import os
 import shutil
-import subprocess
 import sys
+import subprocess
 from collections import ChainMap
 from itertools import product
 from pathlib import Path
@@ -23,8 +23,8 @@ from ruamel.yaml import YAML
 
 from .pbs import create_pbs_file
 
-yaml = YAML()
-PathLike = Union[str, Path]
+yaml = YAML()  # pylint: disable=invalid-name
+PathLike = Union[str, Path]  # pylint: disable=invalid-name
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -79,11 +79,23 @@ def variable_matrix(variables: Dict[str, Any],
 
 # TODO update type inference for this when issues in mypy are closed
 def uniqueify(my_list: Any) -> List[Any]:
-    return list(dict.fromkeys(my_list))
+    """Remove duplicate entries in a list retaining order."""
+    if sys.version_info >= (3, 6):
+        # An implementation specific detail of py3.6 is the retentation of order
+        # within a dictionary. In py3.7 this becomes the documented behaviour.
+        return list(dict.fromkeys(my_list))
+    
+    # Slower method of order preserving unique list in older python versions
+    seen = set()
+    return [x for x in my_list if x not in seen and not seen.add(x)]
 
 
 def process_command(commands: Union[str, List[str]],
                     matrix: List[Dict[str, Any]]) -> Iterator[List[str]]:
+    """Generate all combinations of commands given a variable matrix.
+
+    Processes the commands to be sequences of strings.
+    """
     # Ensure commands is a list
     if isinstance(commands, str):
         commands = [commands]
@@ -95,12 +107,14 @@ def process_command(commands: Union[str, List[str]],
 
 
 def read_file(filename: PathLike='experiment.yml') -> Dict['str', Any]:
+    """Read and parse yaml file."""
     with open(filename, 'r') as stream:
         structure = yaml.load(stream)
     return structure
 
 
 def process_file(filename: PathLike='experiment.yml') -> None:
+    """"""
     # Ensure filename is a Path
     filename = Path(filename)
 
@@ -128,6 +142,14 @@ def process_file(filename: PathLike='experiment.yml') -> None:
 
 def run_bash_commands(command_groups: Iterator[List[str]],
                       directory: PathLike=Path.cwd()) -> None:
+    """Submit commands to the bash shell.
+
+    This function runs the commands iteratively but handles errors in the 
+    same way as with the pbs_commands function. A command will run for all
+    combinations of variables in the variable matrix, however if any one of
+    those commands fails then the next command will not run.
+
+    """
     logger.debug('Running commands in bash shell')
     # iterate through command groups
     for command_group in command_groups:
@@ -135,11 +157,16 @@ def run_bash_commands(command_groups: Iterator[List[str]],
         if shutil.which(command_group[0].split()[0]) is None:
             raise ProcessLookupError('Command `{}` was not found, check your PATH.')
 
+        failed = False
         for command in command_group:
             try:
                 subprocess.run(command.split(), check=True, cwd=directory)
             except ProcessLookupError:
-                print('Command failed: check PATH is correctly set\n', command)
+                failed = True
+                logger.error('Command failed: check PATH is correctly set\n\t%s', command)
+        if failed:
+            logger.error('A command failed, not continuing further.')
+            return
 
 
 def run_pbs_commands(command_groups: Iterator[List[str]],
