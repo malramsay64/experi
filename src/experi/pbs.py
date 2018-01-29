@@ -15,6 +15,9 @@ pbs.
 
 from typing import Any, List, Union, Mapping
 from collections import ChainMap
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 PBS_FILE = """#!/bin/bash

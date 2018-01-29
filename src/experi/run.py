@@ -27,7 +27,6 @@ yaml = YAML()  # pylint: disable=invalid-name
 PathLike = Union[str, Path]  # pylint: disable=invalid-name
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -100,6 +99,8 @@ def process_command(commands: Union[str, List[str]],
     if isinstance(commands, str):
         commands = [commands]
 
+    logger.debug('Found %d commands in file', len(commands))
+
     for command in commands:
         # substitute variables into command
         c_list = [command.format(**kwargs) for kwargs in matrix]
@@ -160,6 +161,7 @@ def run_bash_commands(command_groups: Iterator[List[str]],
         failed = False
         for command in command_group:
             try:
+                logger.info(command)
                 subprocess.run(command.split(), check=True, cwd=directory)
             except ProcessLookupError:
                 failed = True
@@ -219,16 +221,30 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
             if index > 0:
                 submit_cmd += '-W depend=afterok:{} '.format(prev_jobid)
             submit_cmd += str(fname)
+
             # acutally run the command
-            cmd_res = subprocess.run(submit_cmd.split(), cwd=directory)
+            logger.info(submit_cmd)
+            cmd_res = subprocess.run(submit_cmd.split(), cwd=directory, stdout=subprocess.PIPE)
             assert cmd_res.returncode == 0, 'Submitting a job to the queue failed.'
             prev_jobid = cmd_res.stdout
+
+
+def _set_verbosity(ctx, param, value):
+    if value == 1:
+        logging.basicConfig(level=logging.INFO)
+    if value == 2:
+        logging.basicConfig(level=logging.DEBUG)
 
 
 @click.command()
 @click.option('-f', '--input-file',
               type=click.Path(exists=True, dir_okay=False),
               default='experiment.yml',
+              )
+@click.option('-v', '--verbose',
+              callback=_set_verbosity,
+              expose_value=False,
+              count=True,
               )
 def main(input_file) -> None:
     # Process and run commands
