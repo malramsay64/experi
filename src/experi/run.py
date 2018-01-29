@@ -226,7 +226,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
             logger.info(submit_cmd)
             cmd_res = subprocess.run(submit_cmd.split(), cwd=directory, stdout=subprocess.PIPE)
             assert cmd_res.returncode == 0, 'Submitting a job to the queue failed.'
-            prev_jobid = cmd_res.stdout
+            prev_jobid = cmd_res.stdout.decode().strip()
 
 
 def _set_verbosity(ctx, param, value):

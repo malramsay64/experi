@@ -22,16 +22,16 @@ logger = logging.getLogger(__name__)
 
 PBS_FILE = """#!/bin/bash
 #PBS -N {name}
-#PBS -l select={nodes}:ncpus={cpus}:memory={memory}
+#PBS -l select={nodes}:ncpus={cpus}
 #PBS -l walltime={walltime}
-#PBS -J {num_jobs}
+{pbs_array}
 
 cd "$PBS_O_WORKDIR"
 {setup}
 
 COMMAND={command_list}
 
-"${{COMMAND[$PBS_ARRAY_INDEX]}}"
+${{COMMAND[$PBS_ARRAY_INDEX]}}
 """
 
 
@@ -69,13 +69,15 @@ def create_pbs_file(command_group: List[str],
         'walltime': '1:00',
         'cpus': '1',
         'nodes': '1',
-        'memory': '4gb',
         'name': 'experi',
         'setup': '',
     }
     pbs_options = ChainMap(pbs_options, default_options)
     pbs_options['setup'] = parse_setup(pbs_options['setup'])
 
+    num_jobs = len(command_group)
+    logger.debug('Number of jobs: %d', num_jobs)
     return PBS_FILE.format(**pbs_options,
+                           pbs_array='#PBS -J '+num_jobs if num_jobs > 1 else 'PBS_ARRAY_INDEX=0',
                            num_jobs=len(command_group),
                            command_list=commands2bash_array(command_group))
