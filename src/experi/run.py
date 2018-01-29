@@ -95,6 +95,10 @@ def process_command(commands: Union[str, List[str]],
 
     Processes the commands to be sequences of strings.
     """
+    # error checking
+    if commands is None:
+        raise KeyError('The "command" key was not found in the input file.')
+
     # Ensure commands is a list
     if isinstance(commands, str):
         commands = [commands]
@@ -123,6 +127,8 @@ def process_file(filename: PathLike='experiment.yml') -> None:
     logger.debug('Reading file %s', filename)
     structure = read_file(filename)
 
+    if structure.get('variables') is None:
+        raise ValueError('The key "variables" was not found in the input file.')
     # create variable matrix
     variables = list(variable_matrix(structure.get('variables')))
     assert variables
@@ -131,10 +137,13 @@ def process_file(filename: PathLike='experiment.yml') -> None:
 
     # Check for pbs options
     if structure.get('pbs'):
+        pbs_options = structure.get('pbs')
+        if pbs_options is True:
+            pbs_options = {}
         if structure.get('name'):
             # set the name attribute in pbs to global name if no name defined in pbs
-            structure['pbs'].setdefault('name', structure.get('name'))
-        run_pbs_commands(command_groups, structure.get('pbs'), filename.parent)
+            pbs_options.setdefault('name', structure.get('name'))
+        run_pbs_commands(command_groups, pbs_options, filename.parent)
         return
 
     run_bash_commands(command_groups, filename.parent)
@@ -145,7 +154,7 @@ def run_bash_commands(command_groups: Iterator[List[str]],
                       directory: PathLike=Path.cwd()) -> None:
     """Submit commands to the bash shell.
 
-    This function runs the commands iteratively but handles errors in the 
+    This function runs the commands iteratively but handles errors in the
     same way as with the pbs_commands function. A command will run for all
     combinations of variables in the variable matrix, however if any one of
     those commands fails then the next command will not run.
