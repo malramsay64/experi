@@ -37,9 +37,9 @@ ${{COMMAND[$PBS_ARRAY_INDEX]}}
 
 def commands2bash_array(command_group: List[str]) -> str:
     """Convert the list of commands to a bash array."""
-    return_string = '('
+    return_string = '( \\\n'
     for command in command_group:
-        return_string += '"' + command + '" \\\n'
+        return_string += '"' + command.strip() + '" \\\n'
     return_string += ')'
     return return_string
 
@@ -78,6 +78,6 @@ def create_pbs_file(command_group: List[str],
     num_jobs = len(command_group)
     logger.debug('Number of jobs: %d', num_jobs)
     return PBS_FILE.format(**pbs_options,
-                           pbs_array='#PBS -J '+num_jobs if num_jobs > 1 else 'PBS_ARRAY_INDEX=0',
+                           pbs_array='#PBS -J 0-'+str(num_jobs) if num_jobs > 1 else 'PBS_ARRAY_INDEX=0',
                            num_jobs=len(command_group),
                            command_list=commands2bash_array(command_group))
