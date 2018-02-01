@@ -77,7 +77,11 @@ def create_pbs_file(command_group: List[str],
 
     num_jobs = len(command_group)
     logger.debug('Number of jobs: %d', num_jobs)
+    if num_jobs > 1:
+        pbs_array_str = '#PBS -J 0-{}'.format(num_jobs-1)
+    else:
+        pbs_array_str = 'PBS_ARRAY_INDEX=0'
     return PBS_FILE.format(**pbs_options,
-                           pbs_array='#PBS -J 0-'+str(num_jobs) if num_jobs > 1 else 'PBS_ARRAY_INDEX=0',
+                           pbs_array=pbs_array_str,
                            num_jobs=len(command_group),
                            command_list=commands2bash_array(command_group))
