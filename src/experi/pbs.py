@@ -74,6 +74,8 @@ def create_pbs_file(command_group: List[str],
     }
     pbs_options = ChainMap(pbs_options, default_options)
     pbs_options['setup'] = parse_setup(pbs_options['setup'])
+    # remove underlines from name as not supported
+    pbs_options['name'] = pbs_options['name'].replace(' ', '_')
 
     num_jobs = len(command_group)
     logger.debug('Number of jobs: %d', num_jobs)
