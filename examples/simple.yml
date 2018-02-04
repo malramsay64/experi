@@ -1,0 +1,20 @@
+name: simple_experiment
+
+command:
+  - echo command1 var1={var1}
+  - echo command2 var1={var1} var2={var2} var3={var3}
+  - echo command3 var3={var3} var4={var4}
+
+variables:
+  var1:
+    - 0
+    - 1
+    - 2
+  var2: 100
+  var3:
+    - 5
+    - 6
+    - 7
+  var4:
+    - 10
+    - 20
