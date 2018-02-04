@@ -11,9 +11,17 @@
 
 from setuptools import find_packages, setup
 
+
+# Get the version from src/experi/version.py without importing the package
+def get_version():
+    g = {}
+    exec(open("src/experi/version.py").read(), g)
+    return g["__version__"]
+
+
 setup(
     name='experi',
-    version='0.0.8',
+    version=get_version(),
     python_requires='>=3.6',
     setup_requires=[],
     install_requires=['click',

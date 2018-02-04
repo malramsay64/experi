@@ -246,6 +246,7 @@ def _set_verbosity(ctx, param, value):
 
 
 @click.command()
+@click.version_option()
 @click.option('-f', '--input-file',
               type=click.Path(exists=True, dir_okay=False),
               default='experiment.yml',
