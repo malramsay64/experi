@@ -69,6 +69,30 @@ experi will ensure that commands are unique before running them.
 Even though there might be a list of values for variable2,
 only the distinct values for variable1 will be run in the first command.
 
+For long commands the yaml syntax has methods of dealing with multiple lines.
+To have a long command interpreted as a single line the greater-than symbol `>` can be used at the start of the input string like below
+```
+command: >
+    echo
+    This is a really
+    really
+    really
+    really
+    long string
+```
+which will be interpreted as the single line command
+```
+echo This is a really really really really long string
+```
+
+The pipe symbol `|` denotes a multi line command,
+where each newline character in the input string is a newline character
+```
+command: |
+    This is a command
+    split over multiple lines
+```
+
 
 variables
 ---------
