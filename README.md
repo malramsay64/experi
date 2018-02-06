@@ -109,5 +109,5 @@ and documentation available [here][experiment docs].
 
 [miniconda installer]: https://conda.io/miniconda.html
 [sumatra]: http://sumatra.readthedocs.io
-[experiment examples]: https://github.com/malramsay64/experi/examples
+[experiment examples]: https://github.com/malramsay64/experi/tree/master/examples
 [experiment docs]: https://github.com/malramsay64/experi/blob/master/input_file.md
