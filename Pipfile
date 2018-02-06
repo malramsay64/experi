@@ -10,6 +10,7 @@ name = "pypi"
 setuptools = "*"
 "ruamel.yaml" = "*"
 click = "*"
+typing = "*"
 
 
 [dev-packages]
