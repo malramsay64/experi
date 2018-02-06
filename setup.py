@@ -22,7 +22,7 @@ def get_version():
 setup(
     name='experi',
     version=get_version(),
-    python_requires='>=3.6',
+    python_requires='>=3.4',
     setup_requires=[],
     install_requires=['click',
                       'ruamel.yaml'],

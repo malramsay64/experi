@@ -12,7 +12,7 @@ import subprocess
 
 
 def test_command():
-    proc = subprocess.run(['experi'], stdout=subprocess.PIPE, cwd='test/data')
+    proc_out = subprocess.check_output(['experi'], cwd='test/data')
     with open('test/data/result.txt', 'rb') as source:
         expected = source.read()
-    assert proc.stdout == expected
+    assert proc_out == expected

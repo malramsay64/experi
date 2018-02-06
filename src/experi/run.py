@@ -47,7 +47,7 @@ def variable_matrix(variables: Dict[str, Any],
     has all the combinations of varaibles specified in the input.
 
     """
-    _iters: Dict[str, Callable] = {'product': product, 'zip': zip}
+    _iters = {'product': product, 'zip': zip}  # types: Dict[str, Callable]
 
     if isinstance(variables, dict):
         key_vars = []
@@ -113,7 +113,7 @@ def process_command(commands: Union[str, List[str]],
 
 def read_file(filename: PathLike = 'experiment.yml') -> Dict['str', Any]:
     """Read and parse yaml file."""
-    with open(filename, 'r') as stream:
+    with filename.open('r') as stream:
         structure = yaml.load(stream)
     return structure
 
@@ -171,7 +171,7 @@ def run_bash_commands(command_groups: Iterator[List[str]],
         for command in command_group:
             try:
                 logger.info(command)
-                subprocess.run(command.split(), check=True, cwd=directory)
+                subprocess.check_call(command.split(), cwd=str(directory))
             except ProcessLookupError:
                 failed = True
                 logger.error('Command failed: check PATH is correctly set\n\t%s', command)
@@ -183,7 +183,7 @@ def run_bash_commands(command_groups: Iterator[List[str]],
 def run_pbs_commands(command_groups: Iterator[List[str]],
                      pbs_options: Dict[str, Any],
                      directory: PathLike = Path.cwd(),
-                     basename: str =' experi') -> None:
+                     basename: str = 'experi') -> None:
     """Submit a series of commands to a batch scheduler.
 
     This takes a list of strings which are the contents of the pbs files, writes the files to disk
@@ -212,7 +212,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
     # remove existing files
     for fname in directory.glob(basename+'*.pbs'):
         print('Removing {}'.format(fname))
-        os.remove(fname)
+        os.remove(str(fname))
 
     # Write new files and generate commands
     prev_jobid = None
@@ -221,7 +221,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
         content = create_pbs_file(command_group, pbs_options)
         # Write file to disk
         fname = Path(directory / '{}_{:02d}.pbs'.format(basename, index))
-        with open(fname, 'w') as dst:
+        with fname.open('w') as dst:
             dst.write(content)
 
         if submit_job:
@@ -233,9 +233,12 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
 
             # acutally run the command
             logger.info(submit_cmd)
-            cmd_res = subprocess.run(submit_cmd.split(), cwd=directory, stdout=subprocess.PIPE)
-            assert cmd_res.returncode == 0, 'Submitting a job to the queue failed.'
-            prev_jobid = cmd_res.stdout.decode().strip()
+            try:
+                cmd_res = subprocess.check_output(submit_cmd.split(), cwd=directory)
+            except subprocess.CalledProcessError:
+                logger.error('Submitting job to the queue failed.')
+                raise subprocess.CalledProcessError
+            prev_jobid = cmd_res.decode().strip()
 
 
 def _set_verbosity(ctx, param, value):

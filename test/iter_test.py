@@ -11,8 +11,13 @@
 This is a series of tests that are defining the interface of the module,
 primarily the iteration of the variables."""
 
+import sys
+
 import pytest
+
 from experi.run import process_command, variable_matrix
+
+
 
 test_cases = [
     # Test the most basic behaviour, iterating through a list
@@ -98,6 +103,8 @@ test_cases = [
 ]
 
 
+@pytest.mark.xfail(sys.version_info < (3, 6),
+                   reason='Dictionaries nondeterministic in python < 3.6')
 @pytest.mark.parametrize('test, result', test_cases)
 def test_behaviour(test, result):
     variables = list(variable_matrix(test['variables']))

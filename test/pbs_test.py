@@ -17,23 +17,25 @@ from experi.run import process_file
 
 
 DEFAULT_PBS = """#!/bin/bash
-#PBS -N experirun
-#PBS -l select=1:ncpus=1:memory=4gb
+#PBS -N experi
+#PBS -l select=1:ncpus=1
 #PBS -l walltime=1:00
-#PBS -J 1
+PBS_ARRAY_INDEX=0
 
 cd "$PBS_O_WORKDIR"
 
 
-COMMAND=("echo 1" \\\n)
+COMMAND=( \\
+"echo 1" \\
+)
 
-"${COMMAND[$PBS_ARRAY_INDEX]}"
+${COMMAND[$PBS_ARRAY_INDEX]}
 """
 
 
 @pytest.mark.parametrize('command, result', [
-    (['echo 1'], '("echo 1" \\\n)'),
-    (['echo 1', 'echo 2'], '("echo 1" \\\n"echo 2" \\\n)')
+    (['echo 1'], '( \\\n"echo 1" \\\n)'),
+    (['echo 1', 'echo 2'], '( \\\n"echo 1" \\\n"echo 2" \\\n)')
 ])
 def test_commands2bash(command, result):
     assert commands2bash_array(command) == result
@@ -46,6 +48,6 @@ def test_default_pbs():
 def test_pbs_creation():
     directory = Path('test/data/pbs')
     process_file(directory / 'experiment.yml')
-    with open(directory / 'result.txt', 'r') as expected:
-        with open(directory / 'experi_00.pbs', 'r') as result:
+    with (directory / 'result.txt').open('r') as expected:
+        with (directory / 'experi_00.pbs').open('r') as result:
             assert result.read() == expected.read()

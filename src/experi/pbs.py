@@ -83,7 +83,7 @@ def create_pbs_file(command_group: List[str],
         pbs_array_str = '#PBS -J 0-{}'.format(num_jobs-1)
     else:
         pbs_array_str = 'PBS_ARRAY_INDEX=0'
-    return PBS_FILE.format(**pbs_options,
-                           pbs_array=pbs_array_str,
-                           num_jobs=len(command_group),
-                           command_list=commands2bash_array(command_group))
+    pbs_options['pbs_array'] = pbs_array_str
+    pbs_options['num_jobs'] = len(command_group)
+    pbs_options['command_list'] = commands2bash_array(command_group)
+    return PBS_FILE.format(**pbs_options)
