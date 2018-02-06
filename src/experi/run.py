@@ -39,8 +39,8 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def variable_matrix(variables: Dict[str, Any],
-                    parent: str=None,
-                    iterator='product') -> Iterator[Dict[str, Any]]:
+                    parent: str = None,
+                    iterator: str = 'product') -> Iterator[Dict[str, Any]]:
     """Process the variables into a list of the appropriate combinations.
 
     This function performs recursive processing of the input variables, creating an iterator which
@@ -83,7 +83,7 @@ def uniqueify(my_list: Any) -> List[Any]:
         # An implementation specific detail of py3.6 is the retentation of order
         # within a dictionary. In py3.7 this becomes the documented behaviour.
         return list(dict.fromkeys(my_list))
-    
+
     # Slower method of order preserving unique list in older python versions
     seen = set()
     return [x for x in my_list if x not in seen and not seen.add(x)]
@@ -111,15 +111,15 @@ def process_command(commands: Union[str, List[str]],
         yield uniqueify(c_list)
 
 
-def read_file(filename: PathLike='experiment.yml') -> Dict['str', Any]:
+def read_file(filename: PathLike = 'experiment.yml') -> Dict['str', Any]:
     """Read and parse yaml file."""
     with open(filename, 'r') as stream:
         structure = yaml.load(stream)
     return structure
 
 
-def process_file(filename: PathLike='experiment.yml') -> None:
-    """"""
+def process_file(filename: PathLike = 'experiment.yml') -> None:
+    """Process the commands and variables in a file."""
     # Ensure filename is a Path
     filename = Path(filename)
 
@@ -151,7 +151,7 @@ def process_file(filename: PathLike='experiment.yml') -> None:
 
 
 def run_bash_commands(command_groups: Iterator[List[str]],
-                      directory: PathLike=Path.cwd()) -> None:
+                      directory: PathLike = Path.cwd()) -> None:
     """Submit commands to the bash shell.
 
     This function runs the commands iteratively but handles errors in the
@@ -182,8 +182,8 @@ def run_bash_commands(command_groups: Iterator[List[str]],
 
 def run_pbs_commands(command_groups: Iterator[List[str]],
                      pbs_options: Dict[str, Any],
-                     directory: PathLike=Path.cwd(),
-                     basename: str='experi') -> None:
+                     directory: PathLike = Path.cwd(),
+                     basename: str =' experi') -> None:
     """Submit a series of commands to a batch scheduler.
 
     This takes a list of strings which are the contents of the pbs files, writes the files to disk
