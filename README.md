@@ -3,6 +3,27 @@ Experi
 
 A framework for running command line applications with a range of different variables.
 
+How to use
+----------
+
+Actually running experi is a simple process,
+in a directory with an `experiment.yml` file run the command
+```
+$ experi
+```
+If for whatever reason you want to name the file something other than `experiment.yml`
+or to run a file in a different directory a custom file can be specified with the `-f` flag
+```
+$ experi -f not_an_experiment.yml
+```
+Note that since this is designed to keep the specification of the experiment with the results,
+the commands will be run in the same directory as the specified file.
+
+The complicated part of getting everything running is the specification of the experiment
+in the `experiment.yml` file.
+For details on setting up this file, there are examples available in the [examples directory][experiment examples]
+and documentation available [here][experiment docs].
+
 Why should I use this?
 ----------------------
 
@@ -45,7 +66,7 @@ using Sumatra to run Experi.
 Installation
 ------------
 
-Experi is tested on python 3.6, and likely only runs on python 3.5+.
+Experi is tested on python 3.4+ although 3.6+ is recommended #14.
 
 ```
 pip3 install experi
@@ -85,27 +106,6 @@ installing to your home directory rather than for everyone.
 ```
 pip3 install --user experi
 ```
-
-How to use
-----------
-
-Actually running experi is a simple process,
-in a directory with an `experiment.yml` file run the command
-```
-$ experi
-```
-If for whatever reason you want to name the file something other than `experiment.yml`
-or to run a file in a different directory a custom file can be specified with the `-f` flag
-```
-$ experi -f not_an_experiment.yml
-```
-Note that since this is designed to keep the specification of the experiment with the results,
-the commands will be run in the same directory as the specified file.
-
-The complicated part of getting everything running is the specification of the experiment
-in the `experiment.yml` file.
-For details on setting up this file, there are examples available in the [examples directory][experiment examples]
-and documentation available [here][experiment docs].
 
 [miniconda installer]: https://conda.io/miniconda.html
 [sumatra]: http://sumatra.readthedocs.io
