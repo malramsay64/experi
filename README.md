@@ -48,7 +48,7 @@ Installation
 Experi is tested on python 3.6, and likely only runs on python 3.5+.
 
 ```
-pip install experi
+pip3 install experi
 ```
 
 For installation from source
@@ -56,13 +56,13 @@ For installation from source
 ```
 git clone https://github.com/malramsay64/experi.git
 cd experi
-pip install .
+pip3 install .
 ```
 
 To install a development version, `pipenv` is required
 which can be installed by running
 ```
-pip install pipenv
+pip3 install pipenv
 ```
 and installing the dependencies by running
 ```
@@ -83,7 +83,7 @@ For those of you trying to run this on a cluster with only user privileges
 including the `--user` flag will resolve issues with pip requiring elevated permissions
 installing to your home directory rather than for everyone.
 ```
-pip install --user experi
+pip3 install --user experi
 ```
 
 How to use
