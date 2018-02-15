@@ -1,0 +1,10 @@
+command: 
+  - echo {var1}
+  - echo {var1}
+
+variables: 
+  var1: [1, 2, 3, 4, 5]
+
+result:
+  - ['echo 1', 'echo 2', 'echo 3', 'echo 4', 'echo 5']
+  - ['echo 1', 'echo 2', 'echo 3', 'echo 4', 'echo 5']
