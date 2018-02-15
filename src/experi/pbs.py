@@ -14,6 +14,7 @@ pbs.
 """
 
 from typing import Any, List, Union, Mapping
+from copy import deepcopy
 from collections import ChainMap, OrderedDict
 import logging
 
@@ -125,7 +126,8 @@ def pbs_header(**kwargs):
 
     # Parse arbitrary options
     for key, val in kwargs.items():
-        header_string += '#PBS -{} {}\n'.format(key, val)
+        logger.warning('Arbitrary key passed: %s', key)
+        # header_string += '#PBS -{} {}\n'.format(key, val)
 
     return header_string
 
@@ -139,6 +141,7 @@ def create_pbs_file(command_group: List[str],
     default options.
 
     """
+    pbs_options = deepcopy(pbs_options)
     try:
         setup_string = parse_setup(pbs_options['setup'])
         del pbs_options['setup']
@@ -153,7 +156,6 @@ def create_pbs_file(command_group: List[str],
         header_string += '#PBS -J 0-{}\n'.format(num_jobs-1)
     else:
         header_string += 'PBS_ARRAY_INDEX=0\n'
-    pbs_options['command_list'] = commands2bash_array(command_group)
     return header_string + PBS_TEMPLATE.format(
         command_list=commands2bash_array(command_group),
         setup=setup_string,
