@@ -12,3 +12,21 @@ pbs:
   memory: 2gb
   setup:
     - module load python
+
+result: |
+  #!/bin/bash
+  #PBS -N pbs_test
+  #PBS -l select=1:ncpus=2:mem=2gb
+  #PBS -l walltime=30:00
+  #PBS -J 0-2
+
+  cd "$PBS_O_WORKDIR"
+  module load python
+
+  COMMAND=( \
+  "echo 1" \
+  "echo 2" \
+  "echo 3" \
+  )
+
+  ${COMMAND[$PBS_ARRAY_INDEX]}

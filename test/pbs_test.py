@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from experi.pbs import commands2bash_array, create_pbs_file
-from experi.run import process_file
+from experi.run import process_file, read_file
 
 
 DEFAULT_PBS = """#!/bin/bash
@@ -48,6 +48,6 @@ def test_default_pbs():
 def test_pbs_creation():
     directory = Path('test/data/pbs')
     process_file(directory / 'experiment.yml')
-    with (directory / 'result.txt').open('r') as expected:
-        with (directory / 'experi_00.pbs').open('r') as result:
-            assert result.read() == expected.read()
+    expected = read_file(directory / 'experiment.yml')['result']
+    with (directory / 'experi_00.pbs').open('r') as result:
+        assert result.read() == expected
