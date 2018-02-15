@@ -3,16 +3,15 @@ name: demo
 command: echo {command} {greeting} {name}
 
 variables:
-    command:
-        - echo
-        - say
+  command:
+    - echo
+    - say
+  zip:
     greeting:
-        value:
-            - hello
-            - bonjour
-            - hola
-        name:
-            - Alice
-            - Bob
-            - Charmaine
-        iterator: zip
+      - hello
+      - bonjour
+      - hola
+    name:
+      - Alice
+      - Bob
+      - Charmaine

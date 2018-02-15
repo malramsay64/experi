@@ -20,8 +20,8 @@ variables:
     - 20
 
 pbs:
-    cpus: 1
-    nodes: 1
+    ncpus: 1
+    select: 1
     walltime: 1:00
     setup:
       - echo setup

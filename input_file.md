@@ -109,26 +109,16 @@ The simplest case is for a single value of a variable
 command: echo hello {name}
 
 variables:
-    name:
-        value: Alice
+    name: Alice
 ```
-with the value being specified using the `value` key.
-For simple applications this `value` key can be discarded
-giving the simpler form
-```
-variables:
-    variable1: Alice
-```
-
 Specifying lists of variables can be done in the same way as the commands,
-again for this simple case, the `value` keyword is optional
+again for this simple case,
 ```
 variables:
     variable1:
-        value:
-            - Alice
-            - Bob
-            - Charmaine
+        - Alice
+        - Bob
+        - Charmaine
 ```
 
 ### Multiple Variables
@@ -166,7 +156,7 @@ we can add both the greetings, and all the names giving the input file
 ```
 command: echo {greeting} {name}
 variables:
-    greeting: 
+    greeting:
         - hello
         - bonjour
     name:
@@ -193,33 +183,33 @@ which could be explicitly defined like so
 ```
 command: echo {greeting} {name}
 variables:
-    greeting: 
-        - hello
-        - bonjour
-    name:
-        - Alice
-        - Bob
-        - Charmaine
-    iterator: product
+    product:
+        greeting:
+            - hello
+            - bonjour
+        name:
+            - Alice
+            - Bob
+            - Charmaine
 ```
-however if we know that 
+however if we know that
 Alice speaks English,
-Bob speaks French, and 
+Bob speaks French, and
 Charmaine speaks Spanish
 we can use a similar specification,
 however instead of a product iterator we can use zip.
 ```
 command: echo {greeting} {name}
 variables:
-    greeting: 
-        - hello
-        - bonjour
-        - hola
-    name:
-        - Alice
-        - Bob
-        - Charmaine
-    iterator: zip
+    zip:
+        greeting:
+            - hello
+            - bonjour
+            - hola
+        name:
+            - Alice
+            - Bob
+            - Charmaine
 ```
 This is just the python `zip` function under the hood,
 and will produce the output
@@ -229,29 +219,28 @@ bonjour Bob
 hola Charmaine
 ```
 This definition of the iterator applies to
-all variables at the same level as the iterator definition.
-So if we wanted to `echo` to the screen 
+all variables defined in the level directly under the iterator.
+So if we wanted to `echo` to the screen
 and assuming we are on macOS use the `say` command,
-we need to make use of the `value` keyword.
+
 ```
 command: {command} {greeting} {name}
 variables:
     command:
         - echo
         - say
-    greeting:
-        value:
+    zip:
+        greeting:
             - hello
             - bonjour
-            - hola
+            - holj
         name:
             - Alice
             - Bob
             - Charmaine
-        iterator: zip
 ```
 In the above specification,
-we are applying the `zip` iterator to the variables specified under greeting,
+we are applying the `zip` iterator to the variables greeting and name,
 however all the resulting values will then use the `product` iterator,
 resulting in the following sequence of commands.
 ```
@@ -267,9 +256,6 @@ pbs
 ---
 
 This section is for the specification of the options for submission to a job scheduler.
-Currently, the submission only works on quartz,
-a machine in the Chemistry department at the University of Sydney,
-however I do plan to make it more configurable.
 
 The simplest case is just specifying
 ```
@@ -279,8 +265,8 @@ which will submit the job to the scheduler using the default values
 which are
 ```
 pbs:
-    cpus: 1
-    nodes: 1
+    ncpus: 1
+    select: 1
     walltime: 1:00
     setup: ''
 ```
@@ -293,6 +279,15 @@ pbs:
     setup:
         - module load hoomd
         - export PATH=$HOME/.local/bin:$PATH
+```
+
+While there are some niceties to make specifying options easier
+it is possible to pass any option by using the flag as the dictionary key
+like in the example below with the mail address `M` and path to the output stream `o`
+```
+pbs:
+    M: malramsay64@gmail.com
+    o: dest
 ```
 
 ### Multiple Commands and Variables
