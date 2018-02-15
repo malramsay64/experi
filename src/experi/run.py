@@ -127,7 +127,7 @@ def process_file(filename: PathLike = 'experiment.yml') -> None:
     filename = Path(filename)
 
     # Read input file
-    logger.debug('Reading file %s', filename)
+    logger.debug('Reading file %s', str(filename))
     structure = read_file(filename)
 
     if structure.get('variables') is None:
@@ -237,7 +237,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
             # acutally run the command
             logger.info(submit_cmd)
             try:
-                cmd_res = subprocess.check_output(submit_cmd.split(), cwd=directory)
+                cmd_res = subprocess.check_output(submit_cmd.split(), cwd=str(directory))
             except subprocess.CalledProcessError:
                 logger.error('Submitting job to the queue failed.')
                 raise subprocess.CalledProcessError
