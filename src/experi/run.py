@@ -240,7 +240,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
                 cmd_res = subprocess.check_output(submit_cmd.split(), cwd=str(directory))
             except subprocess.CalledProcessError:
                 logger.error('Submitting job to the queue failed.')
-                raise subprocess.CalledProcessError
+                break
             prev_jobid = cmd_res.decode().strip()
 
 
