@@ -53,14 +53,17 @@ def variable_matrix(variables: Dict[str, Any],
         key_vars = []
         # Check for iterator variable and remove if nessecary
         # changing the value of the iterator for remaining levels.
-        if variables.get('iterator'):
-            iterator = variables.get('iterator')
-            del variables['iterator']
+        if variables.get('zip'):
+            key_vars.append(list(variable_matrix(variables['zip'], iterator='zip')))
+            del variables['zip']
+        elif variables.get('product'):
+            logger.debug('Yielding from product iterator')
+            key_vars.append(list(variable_matrix(variables['product'], iterator='product')))
+            del variables['product']
+
         for key, value in variables.items():
             # The case where we have a dictionary representing a
             # variable's value, the value is stored in 'value'.
-            if key == 'value':
-                key = parent
             key_vars.append(list(variable_matrix(value, key, iterator)))
         # Iterate through all possible products generating a dictionary
         for i in _iters[iterator](*key_vars):
