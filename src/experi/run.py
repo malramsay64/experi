@@ -232,7 +232,7 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
             submit_cmd = 'qsub '
             if index > 0:
                 submit_cmd += '-W depend=afterok:{} '.format(prev_jobid)
-            submit_cmd += str(fname)
+            submit_cmd += fname.name
 
             # acutally run the command
             logger.info(submit_cmd)

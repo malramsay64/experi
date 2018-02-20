@@ -126,8 +126,8 @@ def pbs_header(**kwargs):
 
     # Parse arbitrary options
     for key, val in kwargs.items():
-        logger.warning('Arbitrary key passed: %s', key)
-        # header_string += '#PBS -{} {}\n'.format(key, val)
+        logger.warning('Arbitrary key passed: -%s %s', key, val)
+        header_string += '#PBS -{} {}\n'.format(key, val)
 
     return header_string
 
