@@ -11,8 +11,8 @@
 import logging
 import os
 import shutil
-import sys
 import subprocess
+import sys
 from collections import ChainMap
 from itertools import product
 from pathlib import Path
@@ -38,9 +38,9 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
 
 
-def variable_matrix(variables: Dict[str, Any],
-                    parent: str = None,
-                    iterator: str = 'product') -> Iterator[Dict[str, Any]]:
+def variable_matrix(
+    variables: Dict[str, Any], parent: str = None, iterator: str = 'product'
+) -> Iterator[Dict[str, Any]]:
     """Process the variables into a list of the appropriate combinations.
 
     This function performs recursive processing of the input variables, creating an iterator which
@@ -58,7 +58,9 @@ def variable_matrix(variables: Dict[str, Any],
             del variables['zip']
         elif variables.get('product'):
             logger.debug('Yielding from product iterator')
-            key_vars.append(list(variable_matrix(variables['product'], iterator='product')))
+            key_vars.append(
+                list(variable_matrix(variables['product'], iterator='product'))
+            )
             del variables['product']
 
         for key, value in variables.items():
@@ -80,6 +82,8 @@ def variable_matrix(variables: Dict[str, Any],
 
 
 # TODO update type inference for this when issues in mypy are closed
+
+
 def uniqueify(my_list: Any) -> List[Any]:
     """Remove duplicate entries in a list retaining order."""
     if sys.version_info >= (3, 6):
@@ -92,8 +96,9 @@ def uniqueify(my_list: Any) -> List[Any]:
     return [x for x in my_list if x not in seen and not seen.add(x)]
 
 
-def process_command(commands: Union[str, List[str]],
-                    matrix: List[Dict[str, Any]]) -> Iterator[List[str]]:
+def process_command(
+    commands: Union[str, List[str]], matrix: List[Dict[str, Any]]
+) -> Iterator[List[str]]:
     """Generate all combinations of commands given a variable matrix.
 
     Processes the commands to be sequences of strings.
@@ -132,6 +137,7 @@ def process_file(filename: PathLike = 'experiment.yml') -> None:
 
     if structure.get('variables') is None:
         raise ValueError('The key "variables" was not found in the input file.')
+
     # create variable matrix
     variables = list(variable_matrix(structure.get('variables')))
     assert variables
@@ -153,8 +159,9 @@ def process_file(filename: PathLike = 'experiment.yml') -> None:
     return
 
 
-def run_bash_commands(command_groups: Iterator[List[str]],
-                      directory: PathLike = Path.cwd()) -> None:
+def run_bash_commands(
+    command_groups: Iterator[List[str]], directory: PathLike = Path.cwd()
+) -> None:
     """Submit commands to the bash shell.
 
     This function runs the commands iteratively but handles errors in the
@@ -177,16 +184,20 @@ def run_bash_commands(command_groups: Iterator[List[str]],
                 subprocess.check_call(command.split(), cwd=str(directory))
             except ProcessLookupError:
                 failed = True
-                logger.error('Command failed: check PATH is correctly set\n\t%s', command)
+                logger.error(
+                    'Command failed: check PATH is correctly set\n\t%s', command
+                )
         if failed:
             logger.error('A command failed, not continuing further.')
             return
 
 
-def run_pbs_commands(command_groups: Iterator[List[str]],
-                     pbs_options: Dict[str, Any],
-                     directory: PathLike = Path.cwd(),
-                     basename: str = 'experi') -> None:
+def run_pbs_commands(
+    command_groups: Iterator[List[str]],
+    pbs_options: Dict[str, Any],
+    directory: PathLike = Path.cwd(),
+    basename: str = 'experi',
+) -> None:
     """Submit a series of commands to a batch scheduler.
 
     This takes a list of strings which are the contents of the pbs files, writes the files to disk
@@ -205,20 +216,23 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
     logger.debug('Creating commands in pbs files.')
     # Check qsub exists
     if shutil.which('qsub') is None:
-        logger.warning('The `qsub` command is not found.'
-                       'Skipping job submission and just generating files')
+        logger.warning(
+            'The `qsub` command is not found.'
+            'Skipping job submission and just generating files'
+        )
         submit_job = False
 
     # Ensure directory is a Path
     directory = Path(directory)
 
     # remove existing files
-    for fname in directory.glob(basename+'*.pbs'):
+    for fname in directory.glob(basename + '*.pbs'):
         print('Removing {}'.format(fname))
         os.remove(str(fname))
 
     # Write new files and generate commands
     prev_jobid = None
+    submit_cmd = ['qsub']
     for index, command_group in enumerate(command_groups):
         # Generate pbs file
         content = create_pbs_file(command_group, pbs_options)
@@ -229,18 +243,21 @@ def run_pbs_commands(command_groups: Iterator[List[str]],
 
         if submit_job:
             # Construct command
-            submit_cmd = 'qsub '
             if index > 0:
-                submit_cmd += '-W depend=afterok:{} '.format(prev_jobid)
-            submit_cmd += fname.name
+                # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
+                # with the first.
+                submit_cmd += ['-W', 'depend=afterok:{} '.format(prev_jobid)]
 
             # acutally run the command
             logger.info(submit_cmd)
             try:
-                cmd_res = subprocess.check_output(submit_cmd.split(), cwd=str(directory))
+                cmd_res = subprocess.check_output(
+                    submit_cmd + [fname.name], cwd=str(directory)
+                )
             except subprocess.CalledProcessError:
                 logger.error('Submitting job to the queue failed.')
                 break
+
             prev_jobid = cmd_res.decode().strip()
 
 
@@ -253,15 +270,15 @@ def _set_verbosity(ctx, param, value):
 
 @click.command()
 @click.version_option()
-@click.option('-f', '--input-file',
-              type=click.Path(exists=True, dir_okay=False),
-              default='experiment.yml',
-              )
-@click.option('-v', '--verbose',
-              callback=_set_verbosity,
-              expose_value=False,
-              count=True,
-              )
+@click.option(
+    '-f',
+    '--input-file',
+    type=click.Path(exists=True, dir_okay=False),
+    default='experiment.yml',
+)
+@click.option(
+    '-v', '--verbose', callback=_set_verbosity, expose_value=False, count=True
+)
 def main(input_file) -> None:
     # Process and run commands
     process_file(input_file)
