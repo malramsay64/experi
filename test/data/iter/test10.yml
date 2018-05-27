@@ -1,0 +1,19 @@
+# Test list of zip iterators
+
+command: echo {var1} {var2}
+
+variables:
+  zip:
+    - var1: 1
+      var2: 4
+
+    - var1: 1
+      var2: 4
+
+    - var1: 2
+      var2: 5
+
+    - var1: 3
+      var2: 6
+
+result: [['echo 1 4', 'echo 2 5', 'echo 3 6']]
