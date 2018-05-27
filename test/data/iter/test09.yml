@@ -1,4 +1,5 @@
 # Test string variables
+
 command: 'echo {var1}'
 
 variables:

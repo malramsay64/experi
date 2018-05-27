@@ -1,3 +1,5 @@
+# Test a list of variables is output correctly
+
 command: echo {var1}
 
 variables:

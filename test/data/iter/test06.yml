@@ -1,8 +1,10 @@
+# Test multiple commands with no variable overlap
+
 command:
   - echo {var1}
   - echo {var2}
 
-variables: 
+variables:
   zip:
     var1: [1, 2, 3, 4, 5]
     var2: [11, 12, 13, 14, 15]

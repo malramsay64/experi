@@ -1,3 +1,5 @@
+# Test multiple commands
+
 command: 
   - echo {var1}
   - echo {var1}

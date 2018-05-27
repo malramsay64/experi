@@ -1,3 +1,5 @@
+# Test the product of two variables works
+
 command: echo {var1} {var2}
 
 variables:
