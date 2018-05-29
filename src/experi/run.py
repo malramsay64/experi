@@ -16,7 +16,7 @@ import sys
 from collections import ChainMap
 from itertools import product
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Union
 
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -41,7 +41,7 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def variable_matrix(
     variables: Dict[str, Any], parent: str = None, iterator: str = "product"
-) -> Iterator[Dict[str, Any]]:
+) -> Iterable[Dict[str, Any]]:
     """Process the variables into a list of the appropriate combinations.
 
     This function performs recursive processing of the input variables, creating an iterator which
@@ -51,7 +51,7 @@ def variable_matrix(
     _iters = {"product": product, "zip": zip}  # types: Dict[str, Callable]
 
     if isinstance(variables, dict):
-        key_vars = []
+        key_vars = []  # types: Iterable[Dict[Str, Any]]
         # Check for iterator variable and remove if nessecary
         # changing the value of the iterator for remaining levels.
         if variables.get("zip"):
@@ -69,11 +69,9 @@ def variable_matrix(
             del variables["product"]
 
         for key, value in variables.items():
-            # The case where we have a dictionary representing a
-            # variable's value, the value is stored in 'value'.
             key_vars.append(list(variable_matrix(value, key, iterator)))
         # Iterate through all possible products generating a dictionary
-        for i in _iters[iterator](*key_vars):
+        for i in _iters[iterator](*key_vars):  # types: ignore
             yield combine_dictionaries(i)
 
     elif isinstance(variables, list):
@@ -256,7 +254,7 @@ def run_pbs_commands(
                 submit_cmd += ["-W", "depend=afterok:{} ".format(prev_jobid)]
 
             # acutally run the command
-            logger.info(submit_cmd)
+            logger.info(str(submit_cmd))
             try:
                 cmd_res = subprocess.check_output(
                     submit_cmd + [fname.name], cwd=str(directory)

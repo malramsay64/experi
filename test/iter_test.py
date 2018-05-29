@@ -15,11 +15,8 @@ import sys
 from pathlib import Path
 
 import pytest
-from ruamel.yaml import YAML
 
 from experi.run import process_command, read_file, variable_matrix
-
-yaml = YAML()  # pylint: disable=invalid-name
 
 test_cases = Path("test/data/iter").glob("test*.yml")
 
