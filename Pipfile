@@ -1,12 +1,9 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 setuptools = "*"
 "ruamel.yaml" = "*"
 click = "*"
@@ -14,9 +11,9 @@ typing = "*"
 "jinja2" = "*"
 
 [dev-packages]
-
 mypy = "*"
 pylint = "*"
 pytest = "*"
 bumpversion = "*"
 twine = "*"
+black = "*"

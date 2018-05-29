@@ -40,7 +40,7 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def variable_matrix(
-    variables: Dict[str, Any], parent: str = None, iterator: str = 'product'
+    variables: Dict[str, Any], parent: str = None, iterator: str = "product"
 ) -> Iterator[Dict[str, Any]]:
     """Process the variables into a list of the appropriate combinations.
 
@@ -48,21 +48,21 @@ def variable_matrix(
     has all the combinations of varaibles specified in the input.
 
     """
-    _iters = {'product': product, 'zip': zip}  # types: Dict[str, Callable]
+    _iters = {"product": product, "zip": zip}  # types: Dict[str, Callable]
 
     if isinstance(variables, dict):
         key_vars = []
         # Check for iterator variable and remove if nessecary
         # changing the value of the iterator for remaining levels.
-        if variables.get('zip'):
-            key_vars.append(list(variable_matrix(variables['zip'], iterator='zip')))
-            del variables['zip']
-        elif variables.get('product'):
-            logger.debug('Yielding from product iterator')
+        if variables.get("zip"):
+            key_vars.append(list(variable_matrix(variables["zip"], iterator="zip")))
+            del variables["zip"]
+        elif variables.get("product"):
+            logger.debug("Yielding from product iterator")
             key_vars.append(
-                list(variable_matrix(variables['product'], iterator='product'))
+                list(variable_matrix(variables["product"], iterator="product"))
             )
-            del variables['product']
+            del variables["product"]
 
         for key, value in variables.items():
             # The case where we have a dictionary representing a
@@ -112,7 +112,7 @@ def process_command(
     if isinstance(commands, str):
         commands = [commands]
 
-    logger.debug('Found %d commands in file', len(commands))
+    logger.debug("Found %d commands in file", len(commands))
 
     for command in commands:
         # substitute variables into command
@@ -120,41 +120,41 @@ def process_command(
         yield uniqueify(c_list)
 
 
-def read_file(filename: PathLike = 'experiment.yml') -> Dict['str', Any]:
+def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
     """Read and parse yaml file."""
-    env = Environment(loader=FileSystemLoader('.'))
+    env = Environment(loader=FileSystemLoader("."))
     stream = env.get_template(str(filename)).render()
     logger.debug("Input file: \n%s", stream)
     structure = yaml.load(stream)
     return structure
 
 
-def process_file(filename: PathLike = 'experiment.yml') -> None:
+def process_file(filename: PathLike = "experiment.yml") -> None:
     """Process the commands and variables in a file."""
     # Ensure filename is a Path
     filename = Path(filename)
 
     # Read input file
-    logger.debug('Reading file %s', str(filename))
+    logger.debug("Reading file %s", str(filename))
     structure = read_file(filename)
 
-    if structure.get('variables') is None:
+    if structure.get("variables") is None:
         raise ValueError('The key "variables" was not found in the input file.')
 
     # create variable matrix
-    variables = list(variable_matrix(structure.get('variables')))
+    variables = list(variable_matrix(structure.get("variables")))
     assert variables
 
-    command_groups = process_command(structure.get('command'), variables)
+    command_groups = process_command(structure.get("command"), variables)
 
     # Check for pbs options
-    if structure.get('pbs'):
-        pbs_options = structure.get('pbs')
+    if structure.get("pbs"):
+        pbs_options = structure.get("pbs")
         if pbs_options is True:
             pbs_options = {}
-        if structure.get('name'):
+        if structure.get("name"):
             # set the name attribute in pbs to global name if no name defined in pbs
-            pbs_options.setdefault('name', structure.get('name'))
+            pbs_options.setdefault("name", structure.get("name"))
         run_pbs_commands(command_groups, pbs_options, filename.parent)
         return
 
@@ -173,12 +173,12 @@ def run_bash_commands(
     those commands fails then the next command will not run.
 
     """
-    logger.debug('Running commands in bash shell')
+    logger.debug("Running commands in bash shell")
     # iterate through command groups
     for command_group in command_groups:
         # Check command works
         if shutil.which(command_group[0].split()[0]) is None:
-            raise ProcessLookupError('Command `{}` was not found, check your PATH.')
+            raise ProcessLookupError("Command `{}` was not found, check your PATH.")
 
         failed = False
         for command in command_group:
@@ -188,10 +188,10 @@ def run_bash_commands(
             except ProcessLookupError:
                 failed = True
                 logger.error(
-                    'Command failed: check PATH is correctly set\n\t%s', command
+                    "Command failed: check PATH is correctly set\n\t%s", command
                 )
         if failed:
-            logger.error('A command failed, not continuing further.')
+            logger.error("A command failed, not continuing further.")
             return
 
 
@@ -199,7 +199,7 @@ def run_pbs_commands(
     command_groups: Iterator[List[str]],
     pbs_options: Dict[str, Any],
     directory: PathLike = Path.cwd(),
-    basename: str = 'experi',
+    basename: str = "experi",
 ) -> None:
     """Submit a series of commands to a batch scheduler.
 
@@ -216,12 +216,12 @@ def run_pbs_commands(
 
     """
     submit_job = True
-    logger.debug('Creating commands in pbs files.')
+    logger.debug("Creating commands in pbs files.")
     # Check qsub exists
-    if shutil.which('qsub') is None:
+    if shutil.which("qsub") is None:
         logger.warning(
-            'The `qsub` command is not found.'
-            'Skipping job submission and just generating files'
+            "The `qsub` command is not found."
+            "Skipping job submission and just generating files"
         )
         submit_job = False
 
@@ -229,19 +229,19 @@ def run_pbs_commands(
     directory = Path(directory)
 
     # remove existing files
-    for fname in directory.glob(basename + '*.pbs'):
-        print('Removing {}'.format(fname))
+    for fname in directory.glob(basename + "*.pbs"):
+        print("Removing {}".format(fname))
         os.remove(str(fname))
 
     # Write new files and generate commands
     prev_jobid = None
-    submit_cmd = ['qsub']
+    submit_cmd = ["qsub"]
     for index, command_group in enumerate(command_groups):
         # Generate pbs file
         content = create_pbs_file(command_group, pbs_options)
         # Write file to disk
-        fname = Path(directory / '{}_{:02d}.pbs'.format(basename, index))
-        with fname.open('w') as dst:
+        fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
+        with fname.open("w") as dst:
             dst.write(content)
 
         if submit_job:
@@ -249,7 +249,7 @@ def run_pbs_commands(
             if index > 0:
                 # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
                 # with the first.
-                submit_cmd += ['-W', 'depend=afterok:{} '.format(prev_jobid)]
+                submit_cmd += ["-W", "depend=afterok:{} ".format(prev_jobid)]
 
             # acutally run the command
             logger.info(submit_cmd)
@@ -258,7 +258,7 @@ def run_pbs_commands(
                     submit_cmd + [fname.name], cwd=str(directory)
                 )
             except subprocess.CalledProcessError:
-                logger.error('Submitting job to the queue failed.')
+                logger.error("Submitting job to the queue failed.")
                 break
 
             prev_jobid = cmd_res.decode().strip()
@@ -274,13 +274,13 @@ def _set_verbosity(ctx, param, value):
 @click.command()
 @click.version_option()
 @click.option(
-    '-f',
-    '--input-file',
+    "-f",
+    "--input-file",
     type=click.Path(exists=True, dir_okay=False),
-    default='experiment.yml',
+    default="experiment.yml",
 )
 @click.option(
-    '-v', '--verbose', callback=_set_verbosity, expose_value=False, count=True
+    "-v", "--verbose", callback=_set_verbosity, expose_value=False, count=True
 )
 def main(input_file) -> None:
     # Process and run commands
