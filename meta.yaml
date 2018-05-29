@@ -1,0 +1,33 @@
+{% set version = "0.2.3" %}
+
+package:
+  name: experi
+  version: {{ version }}
+
+about:
+  home: https://github.com/malramsay64/experi
+  license: MIT
+  license_file: LICENSE
+
+source:
+  git_url: https://github.com/malramsay64/experi.git
+  git_rev: v{{ version }}
+
+requirements:
+  build:
+    - python {{ python }}
+    - setuptools
+
+
+  run:
+    - {{ pin_compatible('python', max_pin='x.x') }}
+    - ruamel.yaml
+    - click
+    - jinja2
+
+build:
+  entry_points:
+    - experi = experi.run:main
+  preserve_egg_dir: True
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+  number: {{ GIT_DESCRIBE_NUMBER }}
