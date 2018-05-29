@@ -5,15 +5,14 @@ name = "pypi"
 
 [packages]
 setuptools = "*"
-"ruamel.yaml" = "*"
 click = "*"
 typing = "*"
 "jinja2" = "*"
+"e1839a8" = {path = ".", editable = true}
+"ruamel.yaml" = "*"
 
 [dev-packages]
 mypy = "*"
 pylint = "*"
 pytest = "*"
-bumpversion = "*"
-twine = "*"
-black = "*"
+black = "==18.5b0"
