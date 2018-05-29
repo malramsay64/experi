@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from ruamel.yaml import YAML
 
-from experi.run import process_command, variable_matrix
+from experi.run import process_command, read_file, variable_matrix
 
 yaml = YAML()  # pylint: disable=invalid-name
 
@@ -28,8 +28,7 @@ test_cases = Path('test/data/iter').glob('test*.yml')
                    reason='Dictionaries nondeterministic in python < 3.6')
 @pytest.mark.parametrize('test_file', test_cases)
 def test_behaviour(test_file):
-    with test_file.open() as src:
-        test = yaml.load(src)
+    test = read_file(test_file)
     variables = list(variable_matrix(test['variables']))
     print(variables)
     print(test['command'])

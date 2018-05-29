@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Union
 
 import click
+from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
 from .pbs import create_pbs_file
@@ -121,8 +122,10 @@ def process_command(
 
 def read_file(filename: PathLike = 'experiment.yml') -> Dict['str', Any]:
     """Read and parse yaml file."""
-    with filename.open('r') as stream:
-        structure = yaml.load(stream)
+    env = Environment(loader=FileSystemLoader('.'))
+    stream = env.get_template(str(filename)).render()
+    logger.debug("Input file: \n%s", stream)
+    structure = yaml.load(stream)
     return structure
 
 

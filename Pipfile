@@ -11,7 +11,7 @@ setuptools = "*"
 "ruamel.yaml" = "*"
 click = "*"
 typing = "*"
-
+"jinja2" = "*"
 
 [dev-packages]
 

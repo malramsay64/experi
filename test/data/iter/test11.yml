@@ -1,0 +1,12 @@
+# Test jinja2 rendering engine performs rendering
+
+command: echo {arg1}
+
+variables:
+  arg1:
+    {% for i in range(5) %}
+      - {{ i }}
+    {% endfor %}
+
+result:
+  - ['echo 0', 'echo 1', 'echo 2', 'echo 3', 'echo 4']

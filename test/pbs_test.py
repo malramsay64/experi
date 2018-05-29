@@ -50,4 +50,4 @@ def test_pbs_creation():
     process_file(directory / 'experiment.yml')
     expected = read_file(directory / 'experiment.yml')['result']
     with (directory / 'experi_00.pbs').open('r') as result:
-        assert result.read() == expected
+        assert result.read().strip() == expected.strip()

@@ -27,6 +27,7 @@ setup(
     install_requires=['click',
                       'ruamel.yaml',
                       'typing',
+                      'jinja2',
                       ],
     packages=find_packages('src'),
     package_dir={'': 'src'},
