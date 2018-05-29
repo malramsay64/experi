@@ -55,7 +55,11 @@ def variable_matrix(
         # Check for iterator variable and remove if nessecary
         # changing the value of the iterator for remaining levels.
         if variables.get("zip"):
-            key_vars.append(list(variable_matrix(variables["zip"], iterator="zip")))
+            if isinstance(variables.get("zip"), list):
+                for item in variables.get("zip"):
+                    key_vars.append(variable_matrix(item, None, "zip"))
+            else:
+                key_vars.append(list(variable_matrix(variables["zip"], iterator="zip")))
             del variables["zip"]
         elif variables.get("product"):
             logger.debug("Yielding from product iterator")
