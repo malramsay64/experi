@@ -53,6 +53,7 @@ and any of the restrictions on python variables.
 
 Along with supporting a single command,
 multiple commands can be specified as a list
+
 ```yaml
 # experiment.yml
 
@@ -60,6 +61,7 @@ command:
     - echo {variable1}
     - echo {variable1} {variable2}
 ```
+
 Here all the instances of the first command run,
 then all of the second command.
 
@@ -71,7 +73,8 @@ only the distinct values for variable1 will be run in the first command.
 
 For long commands the yaml syntax has methods of dealing with multiple lines.
 To have a long command interpreted as a single line the greater-than symbol `>` can be used at the start of the input string like below
-```
+
+```yaml
 command: >
     echo
     This is a really
@@ -80,14 +83,17 @@ command: >
     really
     long string
 ```
+
 which will be interpreted as the single line command
-```
+
+```yaml
 echo This is a really really really really long string
 ```
 
 The pipe symbol `|` denotes a multi line command,
 where each newline character in the input string is a newline character
-```
+
+```yaml
 command: |
     This is a command
     split over multiple lines
@@ -103,6 +109,7 @@ in a simple human readable fashion.
 Variables are specified using the names
 as given in the command section.
 The simplest case is for a single value of a variable
+
 ```yaml
 # experiment.yml
 
@@ -111,9 +118,11 @@ command: echo hello {name}
 variables:
     name: Alice
 ```
+
 Specifying lists of variables can be done in the same way as the commands,
 again for this simple case,
-```
+
+```yaml
 variables:
     variable1:
         - Alice
@@ -127,15 +136,18 @@ Specifying multiple variables is as simple as specifying a single variable,
 however by default, all possible combinations of the variables are generated.
 In the simplest case,
 with just a single value per variable
-```
+
+```yaml
 command: echo {greeting} {name}
 variables:
     greeting: hello
     name: Alice
 ```
+
 the resulting of the command would be `hello Alice`.
 To greet multiple people we just add more names
-```
+
+```yaml
 comamnd: echo {greeting} {name}
 variables:
     greeting: hello
@@ -144,16 +156,20 @@ variables:
         - Bob
         - Charmaine
 ```
+
 which would result in
-```
+
+```text
 hello Alice
 hello Bob
 hello Charmaine
 ```
+
 We have all possible combinations of the greeting and the name.
 Extending this, to greet all the people in both English and French
 we can add both the greetings, and all the names giving the input file
-```
+
+```yaml
 command: echo {greeting} {name}
 variables:
     greeting:
@@ -164,8 +180,10 @@ variables:
         - Bob
         - Charmaine
 ```
+
 and resulting in the output
-```
+
+```text
 hello Alice
 hello Bob
 hello Charmaine
@@ -180,7 +198,8 @@ In the above examples we are using the try everything approach,
 however there is more control over how variables are specified.
 By default we are using a product iterator,
 which could be explicitly defined like so
-```
+
+```yaml
 command: echo {greeting} {name}
 variables:
     product:
@@ -192,13 +211,15 @@ variables:
             - Bob
             - Charmaine
 ```
+
 however if we know that
 Alice speaks English,
 Bob speaks French, and
 Charmaine speaks Spanish
 we can use a similar specification,
 however instead of a product iterator we can use zip.
-```
+
+```yaml
 command: echo {greeting} {name}
 variables:
     zip:
@@ -211,19 +232,22 @@ variables:
             - Bob
             - Charmaine
 ```
+
 This is just the python `zip` function under the hood,
 and will produce the output
-```
+
+```text
 hello Alice
 bonjour Bob
 hola Charmaine
 ```
+
 This definition of the iterator applies to
 all variables defined in the level directly under the iterator.
 So if we wanted to `echo` to the screen
 and assuming we are on macOS use the `say` command,
 
-```
+```yaml
 command: {command} {greeting} {name}
 variables:
     command:
@@ -239,11 +263,13 @@ variables:
             - Bob
             - Charmaine
 ```
+
 In the above specification,
 we are applying the `zip` iterator to the variables greeting and name,
 however all the resulting values will then use the `product` iterator,
 resulting in the following sequence of commands.
-```
+
+```text
 echo hello Alice
 echo bonjour Bob
 echo hola Charmaine
@@ -258,23 +284,28 @@ pbs
 This section is for the specification of the options for submission to a job scheduler.
 
 The simplest case is just specifying
-```
+
+```yaml
 pbs: True
 ```
+
 which will submit the job to the scheduler using the default values
 which are
-```
+
+```yaml
 pbs:
     ncpus: 1
     select: 1
     walltime: 1:00
     setup: ''
 ```
+
 Of these default values `setup` is the only one that should require explaining.
 This is a sequence of commands in the pbs file that setup the environment,
 like loading modules, modifying the PATH, activating a virtualenv, etc.
 They are just inserted at the top of the file before the command is run.
-```
+
+```yaml
 pbs:
     setup:
         - module load hoomd
@@ -284,7 +315,8 @@ pbs:
 While there are some niceties to make specifying options easier
 it is possible to pass any option by using the flag as the dictionary key
 like in the example below with the mail address `M` and path to the output stream `o`
-```
+
+```yaml
 pbs:
     M: malramsay64@gmail.com
     o: dest
