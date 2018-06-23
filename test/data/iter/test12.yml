@@ -1,0 +1,12 @@
+# Test extra variable defined
+
+command:
+  cmd: echo 'command {var1} > {creates}'
+  creates: test.out
+
+
+variables:
+  var1: [1, 2, 3]
+
+result:
+  - ["echo 'command 1 > test.out'", "echo 'command 2 > test.out'", "echo 'command 3 > test.out'"]
