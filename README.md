@@ -43,25 +43,26 @@ Additionally by keeping the configuration file with the results
 there is a quick reference to the experimental conditions
 and replication is as simple as running `experi`.
 
-What about Sumatra?
+What about ...?
 ---------------------
 
-[Sumatra][sumatra] is a tool for managing and tracking projects,
-with a focus on running a single experiment at a time
-and the reproducibility of the results.
-Experi is more about running many simulations with a range of parameters,
-the reproducibility aspect is a byproduct of the way these parameters are specified.
-Also Sumatra does a much better job of the reproducibility than experi,
-capturing version numbers and executable paths.
+ - [Sumatra][] is a tool for managing and tracking projects,
+    with a focus on running a single experiment at a time and the
+    reproducibility of the results. Experi is more about running many
+    simulations with a range of parameters, the reproducibility aspect is
+    a byproduct of the way these parameters are specified. Also Sumatra does
+    a much better job of the reproducibility than experi, capturing version
+    numbers and executable paths.
 
-If you are wondering which to use,
-or if you already use Sumatra,
-the answer is to use both.
-Since you can run use Sumatra commands from the command line,
-and Experi just runs shell commands you can
-just include the Sumatra executable in the shell command.
-This also works the other way,
-using Sumatra to run Experi.
+- [SciPipe][] Is a workflow manager similar to [Luigi][], [Airflow][] or any
+    number of other examples. These tools can be incredibly powerful,
+    specifying complex networks of dependent tasks and managing their
+    completion. However, they have a learning curve and can be difficult to
+    configure with a task scheduler on a HPC. Experi is about simplicity;
+    taking the workflow you already use and making it more powerful. Experi
+    also uses the task scheduler for the management of dependent jobs, albeit
+    the functionality is currently very basic.
+
 
 Installation
 ------------
