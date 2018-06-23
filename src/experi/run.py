@@ -22,6 +22,7 @@ import click
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
+from .commands import Command
 from .pbs import create_pbs_file
 
 yaml = YAML()  # pylint: disable=invalid-name
@@ -111,14 +112,19 @@ def process_command(
         raise KeyError('The "command" key was not found in the input file.')
 
     # Ensure commands is a list
-    if isinstance(commands, str):
+    if isinstance(commands, (str, dict)):
         commands = [commands]
 
     logger.debug("Found %d commands in file", len(commands))
 
     for command in commands:
-        # substitute variables into command
-        c_list = [command.format(**kwargs) for kwargs in matrix]
+        # create command objects
+        assert isinstance(command, (str, dict))
+        if isinstance(command, str):
+            c_list = [Command(command, variables=variables) for variables in matrix]
+        else:
+            c_list = [Command(**command, variables=variables) for variables in matrix]
+
         yield uniqueify(c_list)
 
 
