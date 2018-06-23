@@ -1,17 +1,15 @@
 experiment.yml
 ==============
 
-This document is a guide to the `experiment.yml` file
-which is used as the input file for experi.
-All the parameters for simulation should be specified in this folder.
-The `experiment.yml` file is designed to be located
-in the same directory as the results,
-so there is no simple method for specifying
-another directory as the working directory.
+This document is a guide to the `experiment.yml` file which is used as the
+input file for experi. All the parameters for simulation should be specified in
+this folder. The `experiment.yml` file is designed to be located in the same
+directory as the results, so there is no simple method for specifying another
+directory as the working directory.
 
-The `experiment.yml` file is broken into a number of sections
-which each have their own roles and behaviour.
-These sections are listed below;
+The `experiment.yml` file is broken into a number of sections which each have
+their own roles and behaviour. These sections are listed below;
+
 - [name](#name)
 - [command](#command)
 - [variables](#variables)
@@ -20,9 +18,8 @@ These sections are listed below;
 name
 ----
 
-This is the name of the project or simulation.
-Currently the only functionality this provides is
-an optional method of specifying the job name for pbs scripts.
+This is the name of the project or simulation. Currently the only functionality
+this provides is an optional method of specifying the job name for pbs scripts.
 
 ```yaml
 # experiment.yml
@@ -33,26 +30,27 @@ name: test experiment
 command
 --------
 
-This is where the sequence of commands for the experiment are specified.
-Here bash commands are specified as a string,
-with variables notated with curly braces as below
+This is where the sequence of commands for the experiment are specified. Here
+bash commands are specified as a string, with variables notated with curly
+braces as below
+
 ```yaml
 # experiment.yml
 
 command: echo {variable1}
 ```
-Here `{variable1}` is replaced with the contents of `variable1`
-as specified in the variables section of the file.
-The variables are filled using python string formatting,
-allowing for more complicated definitions of formatting where required.
-Any number of variables can be added to the command,
-with duplication of variables being perfectly reasonable.
-The restrictions to the specification of variables is that they are not `value` or `iterator`,
-since these are reserved for the parsing of the values of the variables,
-and any of the restrictions on python variables.
 
-Along with supporting a single command,
-multiple commands can be specified as a list
+Here `{variable1}` is replaced with the contents of `variable1` as specified in
+the variables section of the file. The variables are filled using python string
+formatting, allowing for more complicated definitions of formatting where
+required. Any number of variables can be added to the command, with duplication
+of variables being perfectly reasonable. The restrictions to the specification
+of variables is that they are not `value` or `iterator`, since these are
+reserved for the parsing of the values of the variables, and any of the
+restrictions on python variables.
+
+Along with supporting a single command, multiple commands can be specified as
+a list
 
 ```yaml
 # experiment.yml
@@ -62,17 +60,17 @@ command:
     - echo {variable1} {variable2}
 ```
 
-Here all the instances of the first command run,
-then all of the second command.
+Here all the instances of the first command run, then all of the second
+command.
 
-In the above example,
-where there are more variables in one command than another,
-experi will ensure that commands are unique before running them.
-Even though there might be a list of values for variable2,
-only the distinct values for variable1 will be run in the first command.
+In the above example, where there are more variables in one command than
+another, experi will ensure that commands are unique before running them. Even
+though there might be a list of values for variable2, only the distinct values
+for variable1 will be run in the first command.
 
 For long commands the yaml syntax has methods of dealing with multiple lines.
-To have a long command interpreted as a single line the greater-than symbol `>` can be used at the start of the input string like below
+To have a long command interpreted as a single line the greater-than symbol `>`
+can be used at the start of the input string like below
 
 ```yaml
 command: >
@@ -90,8 +88,8 @@ which will be interpreted as the single line command
 echo This is a really really really really long string
 ```
 
-The pipe symbol `|` denotes a multi line command,
-where each newline character in the input string is a newline character
+The pipe symbol `|` denotes a multi line command, where each newline character
+in the input string is a newline character
 
 ```yaml
 command: |
@@ -103,12 +101,10 @@ command: |
 variables
 ---------
 
-This is where the real power of experi lies,
-in being able to specify complex sets of variables
-in a simple human readable fashion.
-Variables are specified using the names
-as given in the command section.
-The simplest case is for a single value of a variable
+This is where the real power of experi lies, in being able to specify complex
+sets of variables in a simple human readable fashion. Variables are specified
+using the names as given in the command section. The simplest case is for
+a single value of a variable
 
 ```yaml
 # experiment.yml
@@ -144,8 +140,8 @@ variables:
     name: Alice
 ```
 
-the resulting of the command would be `hello Alice`.
-To greet multiple people we just add more names
+the resulting of the command would be `hello Alice`. To greet multiple people
+we just add more names
 
 ```yaml
 comamnd: echo {greeting} {name}
@@ -165,9 +161,9 @@ hello Bob
 hello Charmaine
 ```
 
-We have all possible combinations of the greeting and the name.
-Extending this, to greet all the people in both English and French
-we can add both the greetings, and all the names giving the input file
+We have all possible combinations of the greeting and the name. Extending this,
+to greet all the people in both English and French we can add both the
+greetings, and all the names giving the input file
 
 ```yaml
 command: echo {greeting} {name}
@@ -194,10 +190,9 @@ bonjour Charmaine
 
 ### Complex specifications
 
-In the above examples we are using the try everything approach,
-however there is more control over how variables are specified.
-By default we are using a product iterator,
-which could be explicitly defined like so
+In the above examples we are using the try everything approach, however there
+is more control over how variables are specified. By default we are using
+a product iterator, which could be explicitly defined like so
 
 ```yaml
 command: echo {greeting} {name}
@@ -212,12 +207,9 @@ variables:
             - Charmaine
 ```
 
-however if we know that
-Alice speaks English,
-Bob speaks French, and
-Charmaine speaks Spanish
-we can use a similar specification,
-however instead of a product iterator we can use zip.
+however if we know that Alice speaks English, Bob speaks French, and Charmaine
+speaks Spanish we can use a similar specification, however instead of a product
+iterator we can use zip.
 
 ```yaml
 command: echo {greeting} {name}
@@ -233,8 +225,8 @@ variables:
             - Charmaine
 ```
 
-This is just the python `zip` function under the hood,
-and will produce the output
+This is just the python `zip` function under the hood, and will produce the
+output
 
 ```text
 hello Alice
@@ -242,10 +234,9 @@ bonjour Bob
 hola Charmaine
 ```
 
-This definition of the iterator applies to
-all variables defined in the level directly under the iterator.
-So if we wanted to `echo` to the screen
-and assuming we are on macOS use the `say` command,
+This definition of the iterator applies to all variables defined in the level
+directly under the iterator. So if we wanted to `echo` to the screen and
+assuming we are on macOS use the `say` command,
 
 ```yaml
 command: {command} {greeting} {name}
@@ -264,10 +255,9 @@ variables:
             - Charmaine
 ```
 
-In the above specification,
-we are applying the `zip` iterator to the variables greeting and name,
-however all the resulting values will then use the `product` iterator,
-resulting in the following sequence of commands.
+In the above specification, we are applying the `zip` iterator to the variables
+greeting and name, however all the resulting values will then use the `product`
+iterator, resulting in the following sequence of commands.
 
 ```text
 echo hello Alice
@@ -277,6 +267,20 @@ say hello Alice
 say bonjour Bob
 say hola Charmaine
 ```
+
+In more complicated contexts multiple `zip` iterators are supported by having each set of values nested in a list.
+
+```yaml
+variables:
+    zip:
+        - var1: [1, 2, 3]
+          var2: [4, 5, 6]
+        - var3: ['A', 'B', 'C']
+          var4: ['D', 'E', 'F']
+```
+
+Which will `zip` `var1` and `var2`, separately zip `var3` and `var4`, then take
+the product of the result of those two operations.
 
 pbs
 ---
