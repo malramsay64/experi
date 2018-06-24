@@ -102,7 +102,7 @@ def uniqueify(my_list: Any) -> List[Any]:
 
 def process_command(
     commands: Union[str, List[str]], matrix: List[Dict[str, Any]]
-) -> Iterator[List[str]]:
+) -> Iterator[List[Command]]:
     """Generate all combinations of commands given a variable matrix.
 
     Processes the commands to be sequences of strings.
@@ -171,7 +171,7 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
 
 
 def run_bash_commands(
-    command_groups: Iterator[List[str]], directory: PathLike = Path.cwd()
+    command_groups: Iterator[List[Command]], directory: PathLike = Path.cwd()
 ) -> None:
     """Submit commands to the bash shell.
 
@@ -185,14 +185,14 @@ def run_bash_commands(
     # iterate through command groups
     for command_group in command_groups:
         # Check command works
-        if shutil.which(command_group[0].split()[0]) is None:
+        if shutil.which(command_group[0].cmd.split()[0]) is None:
             raise ProcessLookupError("Command `{}` was not found, check your PATH.")
 
         failed = False
         for command in command_group:
             try:
-                logger.info(command)
-                subprocess.check_call(command.split(), cwd=str(directory))
+                logger.info(command.cmd)
+                subprocess.check_call(command.cmd.split(), cwd=str(directory))
             except ProcessLookupError:
                 failed = True
                 logger.error(
@@ -204,7 +204,7 @@ def run_bash_commands(
 
 
 def run_pbs_commands(
-    command_groups: Iterator[List[str]],
+    command_groups: Iterator[List[Command]],
     pbs_options: Dict[str, Any],
     directory: PathLike = Path.cwd(),
     basename: str = "experi",

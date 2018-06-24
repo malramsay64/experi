@@ -31,11 +31,11 @@ ${{COMMAND[$PBS_ARRAY_INDEX]}}
 """
 
 
-def commands2bash_array(command_group: List[str]) -> str:
+def commands2bash_array(command_group: List[Command]) -> str:
     """Convert the list of commands to a bash array."""
     return_string = "( \\\n"
     for command in command_group:
-        return_string += '"' + command.strip() + '" \\\n'
+        return_string += '"' + command.cmd.strip() + '" \\\n'
     return_string += ")"
     return return_string
 
@@ -134,7 +134,9 @@ def pbs_header(**kwargs):
     return header_string
 
 
-def create_pbs_file(command_group: List[str], pbs_options: Mapping[str, Any]) -> str:
+def create_pbs_file(
+    command_group: List[Command], pbs_options: Mapping[str, Any]
+) -> str:
     """Substitute values into a template pbs file.
 
     This substitues the values in the pbs section of the input file
