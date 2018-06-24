@@ -30,4 +30,7 @@ def test_behaviour(test_file):
     variables = list(variable_matrix(test["variables"]))
     print(variables)
     print(test["command"])
-    assert list(process_command(test["command"], variables)) == test["result"]
+    result = []
+    for command_group in process_command(test["command"], variables):
+        result.append([command.cmd for command in command_group])
+    assert result == test["result"]

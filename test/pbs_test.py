@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from experi.commands import Command
 from experi.pbs import commands2bash_array, create_pbs_file
 from experi.run import process_file, read_file
 
@@ -35,8 +36,8 @@ ${COMMAND[$PBS_ARRAY_INDEX]}
 @pytest.mark.parametrize(
     "command, result",
     [
-        (["echo 1"], '( \\\n"echo 1" \\\n)'),
-        (["echo 1", "echo 2"], '( \\\n"echo 1" \\\n"echo 2" \\\n)'),
+        ([Command("echo 1")], '( \\\n"echo 1" \\\n)'),
+        ([Command("echo 1"), Command("echo 2")], '( \\\n"echo 1" \\\n"echo 2" \\\n)'),
     ],
 )
 def test_commands2bash(command, result):
@@ -44,7 +45,7 @@ def test_commands2bash(command, result):
 
 
 def test_default_pbs():
-    assert create_pbs_file(["echo 1"], {}) == DEFAULT_PBS
+    assert create_pbs_file([Command("echo 1")], {}) == DEFAULT_PBS
 
 
 def test_pbs_creation():

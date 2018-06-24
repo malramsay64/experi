@@ -13,10 +13,12 @@ list of commands. The variables will be generated and iterated over using the jo
 pbs.
 """
 
-from typing import Any, List, Union, Mapping
-from copy import deepcopy
-from collections import ChainMap, OrderedDict
 import logging
+from collections import ChainMap, OrderedDict
+from copy import deepcopy
+from typing import Any, List, Mapping, Union
+
+from .commands import Command
 
 logger = logging.getLogger(__name__)
 
