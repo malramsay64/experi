@@ -8,10 +8,14 @@ env:
 
 install:
   - pip install pipenv
+  - pip install codecov
   - pipenv install --dev --ignore-pipfile
 
 script:
   - pipenv run pytest
+
+after_success:
+  - codecov
 
 deploy:
   provider: pypi
