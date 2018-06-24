@@ -56,11 +56,13 @@ def variable_matrix(
         # Check for iterator variable and remove if nessecary
         # changing the value of the iterator for remaining levels.
         if variables.get("zip"):
-            if isinstance(variables.get("zip"), list):
-                for item in variables.get("zip"):
+            items = variables.get("zip")
+            assert items is not None
+            if isinstance(items, list):
+                for item in items:
                     key_vars.append(variable_matrix(item, None, "zip"))
             else:
-                key_vars.append(list(variable_matrix(variables["zip"], iterator="zip")))
+                key_vars.append(list(variable_matrix(items, iterator="zip")))
             del variables["zip"]
         elif variables.get("product"):
             logger.debug("Yielding from product iterator")
@@ -82,10 +84,8 @@ def variable_matrix(
     # Stopping condition -> we have either a single value from a list
     # or a value had only one item
     else:
+        assert parent is not None
         yield {parent: variables}
-
-
-# TODO update type inference for this when issues in mypy are closed
 
 
 def uniqueify(my_list: Any) -> List[Any]:
@@ -146,20 +146,25 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
     logger.debug("Reading file %s", str(filename))
     structure = read_file(filename)
 
-    if structure.get("variables") is None:
+    input_variables = structure.get("variables")
+    if input_variables is None:
         raise ValueError('The key "variables" was not found in the input file.')
+    assert isinstance(input_variables, Dict)
 
     # create variable matrix
-    variables = list(variable_matrix(structure.get("variables")))
+    variables = list(variable_matrix(input_variables))
     assert variables
 
-    command_groups = process_command(structure.get("command"), variables)
+    input_command = structure.get("command")
+    assert isinstance(input_command, (list, str))
+    command_groups = process_command(input_command, variables)
 
     # Check for pbs options
     if structure.get("pbs"):
         pbs_options = structure.get("pbs")
         if pbs_options is True:
             pbs_options = {}
+        assert isinstance(pbs_options, dict)
         if structure.get("name"):
             # set the name attribute in pbs to global name if no name defined in pbs
             pbs_options.setdefault("name", structure.get("name"))
