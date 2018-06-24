@@ -6,9 +6,6 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
-"""
-
 from setuptools import find_packages, setup
 
 
@@ -19,10 +16,13 @@ def get_version():
     return g["__version__"]
 
 
+with open("README.md") as f:
+    long_description = f.read()
+
 setup(
     name="experi",
     version=get_version(),
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     setup_requires=[],
     install_requires=["click", "ruamel.yaml", "typing", "jinja2"],
     packages=find_packages("src"),
@@ -32,10 +32,12 @@ setup(
         [console_scripts]
         experi=experi.run:main
     """,
-    url="",
+    url="https://github.com/malramsay64/experi",
     author="Malcolm Ramsay",
     author_email="malramsay64@gmail.com",
-    description="",
+    description="An interface for managing computational experiments with many independent variables.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
