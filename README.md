@@ -82,7 +82,7 @@ What about ...?
 Installation
 ------------
 
-Experi is tested on python 3.4+ although 3.6+ is recommended #14.
+Experi is currently only compatible with python 3.6.
 
 ```bash
 pip3 install experi
