@@ -1,6 +1,13 @@
 Experi
 ======
 
+
+[![Build Status](https://travis-ci.org/malramsay64/experi.svg?branch=master)](https://travis-ci.org/malramsay64/experi)
+[![codecov](https://codecov.io/gh/malramsay64/experi/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/experi)
+![PyPI](https://img.shields.io/pypi/v/experi.svg)
+[![Anaconda-Server Badge](https://anaconda.org/malramsay/experi/badges/version.svg)](https://anaconda.org/malramsay/experi)
+
+
 A framework for running command line applications with a range of different
 variables.
 
