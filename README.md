@@ -55,6 +55,9 @@ conditions. Additionally by keeping the configuration file with the results
 there is a quick reference to the experimental conditions and replication is as
 simple as running `experi`.
 
+For more information I have written a [blog post][experi blog post] which goes
+into more depth on how this tool has helped my workflow.
+
 What about ...?
 ---------------------
 
@@ -147,3 +150,4 @@ pip3 install --user experi
 [Airflow]: https://airflow.apache.org/
 [experiment examples]: https://github.com/malramsay64/experi/tree/master/examples
 [experiment docs]: https://github.com/malramsay64/experi/blob/master/input_file.md
+[experi blog post]: https://malramsay.com/post/experi_a_tool_for_computational_experiments/
