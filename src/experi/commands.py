@@ -46,6 +46,17 @@ class Command(object):
             creates=self.creates, requires=self.requires, **self.variables
         )
 
+    def cmd_optional_creates(self) -> str:
+        """Create a command that doesn't run when the created file exists.
+
+
+        This command will run cmd, with the additional requirement that the file created by this
+        Command is not present.
+
+        """
+        condition = f"[[-f {self.creates}]] || "
+        return condition + self.cmd
+
     def __str__(self) -> str:
         return self.cmd
 
