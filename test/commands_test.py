@@ -73,3 +73,14 @@ def test_uniqueify_command():
     cmd_list = [Command(cmd="test") for _ in range(5)]
     unique_commands = uniqueify(cmd_list)
     assert len(unique_commands) == 1
+
+
+def test_command_equality():
+    """Test that equality compares classes not just values."""
+
+    class Subcommand(Command):
+
+        def __init__(self, cmd):
+            super().__init__(cmd)
+
+    assert Subcommand("test") != Command("test")
