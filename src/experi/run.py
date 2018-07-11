@@ -100,8 +100,20 @@ def uniqueify(my_list: Any) -> List[Any]:
     return [x for x in my_list if x not in seen and not seen.add(x)]
 
 
+def check_created(
+    my_list: List[Command], directory: Path = Path.cwd()
+) -> List[Command]:
+    """Check whether command needs to be run to generate file.
+
+    This is only a check that the file exists with no check that the file is newer.
+    """
+    return [c for c in my_list if not (directory / c.creates).exists()]
+
+
 def process_command(
-    commands: Union[str, List[str]], matrix: List[Dict[str, Any]]
+    commands: Union[str, List[str]],
+    matrix: List[Dict[str, Any]],
+    directory: Path = Path.cwd(),
 ) -> Iterator[List[Command]]:
     """Generate all combinations of commands given a variable matrix.
 
@@ -125,7 +137,7 @@ def process_command(
         else:
             c_list = [Command(**command, variables=variables) for variables in matrix]
 
-        yield uniqueify(c_list)
+        yield check_created(uniqueify(c_list))
 
 
 def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
