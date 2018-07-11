@@ -247,8 +247,7 @@ def run_pbs_commands(
         os.remove(str(fname))
 
     # Write new files and generate commands
-    prev_jobid = None
-    submit_cmd = ["qsub"]
+    prev_jobids: List[str] = []
     for index, command_group in enumerate(command_groups):
         # Generate pbs file
         content = create_pbs_file(command_group, pbs_options)
@@ -259,10 +258,12 @@ def run_pbs_commands(
 
         if submit_job:
             # Construct command
-            if index > 0:
+            submit_cmd = ["qsub"]
+
+            if prev_jobids:
                 # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
                 # with the first.
-                submit_cmd += ["-W", "depend=afterok:{} ".format(prev_jobid)]
+                submit_cmd += ["-W", "depend=afterok:{} ".format(",".join(prev_jobids))]
 
             # acutally run the command
             logger.info(str(submit_cmd))
@@ -274,7 +275,7 @@ def run_pbs_commands(
                 logger.error("Submitting job to the queue failed.")
                 break
 
-            prev_jobid = cmd_res.decode().strip()
+            prev_jobids.append(cmd_res.decode().strip())
 
 
 def _set_verbosity(ctx, param, value):
