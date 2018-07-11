@@ -16,7 +16,7 @@ import sys
 from collections import ChainMap
 from itertools import product
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Union
+from typing import Any, Dict, Iterable, Iterator, List, Union
 
 import click
 from jinja2 import Environment, FileSystemLoader
