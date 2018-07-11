@@ -148,7 +148,7 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
 
     input_variables = structure.get("variables")
     if input_variables is None:
-        raise ValueError('The key "variables" was not found in the input file.')
+        raise KeyError('The key "variables" was not found in the input file.')
     assert isinstance(input_variables, Dict)
 
     # create variable matrix
