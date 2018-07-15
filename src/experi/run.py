@@ -22,7 +22,7 @@ import click
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
-from .commands import Command
+from .commands import Command, Job
 from .pbs import create_pbs_file
 
 yaml = YAML()  # pylint: disable=invalid-name
@@ -102,7 +102,7 @@ def uniqueify(my_list: Any) -> List[Any]:
 
 def process_command(
     commands: Union[str, List[str]], matrix: List[Dict[str, Any]]
-) -> Iterator[List[Command]]:
+) -> Iterator[Job]:
     """Generate all combinations of commands given a variable matrix.
 
     Processes the commands to be sequences of strings.
@@ -125,7 +125,7 @@ def process_command(
         else:
             c_list = [Command(**command, variables=variables) for variables in matrix]
 
-        yield uniqueify(c_list)
+        yield Job(uniqueify(c_list))
 
 
 def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
@@ -157,7 +157,7 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
 
     input_command = structure.get("command")
     assert isinstance(input_command, (list, str))
-    command_groups = process_command(input_command, variables)
+    jobs = process_command(input_command, variables)
 
     # Check for pbs options
     if structure.get("pbs"):
@@ -168,16 +168,14 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
         if structure.get("name"):
             # set the name attribute in pbs to global name if no name defined in pbs
             pbs_options.setdefault("name", structure.get("name"))
-        run_pbs_commands(command_groups, pbs_options, filename.parent)
+        run_pbs_commands(jobs, pbs_options, filename.parent)
         return
 
-    run_bash_commands(command_groups, filename.parent)
+    run_bash_commands(jobs, filename.parent)
     return
 
 
-def run_bash_commands(
-    command_groups: Iterator[List[Command]], directory: PathLike = Path.cwd()
-) -> None:
+def run_bash_commands(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None:
     """Submit commands to the bash shell.
 
     This function runs the commands iteratively but handles errors in the
@@ -188,13 +186,9 @@ def run_bash_commands(
     """
     logger.debug("Running commands in bash shell")
     # iterate through command groups
-    for command_group in command_groups:
-        # Check command works
-        if shutil.which(command_group[0].cmd.split()[0]) is None:
-            raise ProcessLookupError("Command `{}` was not found, check your PATH.")
-
+    for job in jobs:
         failed = False
-        for command in command_group:
+        for command in job:
             try:
                 logger.info(command.cmd)
                 subprocess.check_call(command.cmd.split(), cwd=str(directory))
@@ -209,7 +203,7 @@ def run_bash_commands(
 
 
 def run_pbs_commands(
-    command_groups: Iterator[List[Command]],
+    jobs: Iterator[Job],
     pbs_options: Dict[str, Any],
     directory: PathLike = Path.cwd(),
     basename: str = "experi",
@@ -248,9 +242,9 @@ def run_pbs_commands(
 
     # Write new files and generate commands
     prev_jobids: List[str] = []
-    for index, command_group in enumerate(command_groups):
+    for index, job in enumerate(jobs):
         # Generate pbs file
-        content = create_pbs_file(command_group, pbs_options)
+        content = create_pbs_file(job, pbs_options)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
         with fname.open("w") as dst:

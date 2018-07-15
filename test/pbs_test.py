@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from experi.commands import Command
-from experi.pbs import commands2bash_array, create_pbs_file
+from experi.commands import Command, Job
+from experi.pbs import create_pbs_file
 from experi.run import process_file, read_file
 
 DEFAULT_PBS = """#!/bin/bash
@@ -34,18 +34,21 @@ ${COMMAND[$PBS_ARRAY_INDEX]}
 
 
 @pytest.mark.parametrize(
-    "command, result",
+    "job, result",
     [
-        ([Command("echo 1")], '( \\\n"echo 1" \\\n)'),
-        ([Command("echo 1"), Command("echo 2")], '( \\\n"echo 1" \\\n"echo 2" \\\n)'),
+        (Job([Command("echo 1")]), '( \\\n"echo 1" \\\n)'),
+        (
+            Job([Command("echo 1"), Command("echo 2")]),
+            '( \\\n"echo 1" \\\n"echo 2" \\\n)',
+        ),
     ],
 )
-def test_commands2bash(command, result):
-    assert commands2bash_array(command) == result
+def test_jobs_as_bash_arrayh(job, result):
+    assert job.as_bash_array() == result
 
 
 def test_default_pbs():
-    assert create_pbs_file([Command("echo 1")], {}) == DEFAULT_PBS
+    assert create_pbs_file(Job([Command("echo 1")]), {}) == DEFAULT_PBS
 
 
 def test_pbs_creation():

@@ -8,10 +8,11 @@
 
 """Command class."""
 
-from typing import Any, Dict, NamedTuple
+from typing import Any, Dict, List
 
 
 class Command(object):
+    """A command to be run for an experiment."""
     _cmd: str
     variables: Dict[str, Any]
     _creates: str = ""
@@ -56,3 +57,30 @@ class Command(object):
 
     def __hash__(self):
         return hash(self.cmd)
+
+
+class Job(object):
+    """A task to perfrom within a simulation."""
+    commands: List[Command]
+    shell: str = "bash"
+
+    def __init__(self, commands) -> None:
+        self.commands = commands
+
+    def __iter__(self):
+        return iter(self.commands)
+
+    def __len__(self) -> int:
+        return len(self.commands)
+
+    def as_bash_array(self) -> str:
+        """Return a representation as a bash array.
+
+        This creates a string formatted as a bash arry containing all the commands in the job.
+
+        """
+        return_string = "( \\\n"
+        for command in self:
+            return_string += '"' + command.cmd.strip() + '" \\\n'
+        return_string += ")"
+        return return_string

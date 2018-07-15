@@ -18,7 +18,7 @@ from collections import ChainMap, OrderedDict
 from copy import deepcopy
 from typing import Any, List, Mapping, Union
 
-from .commands import Command
+from .commands import Command, Job
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +31,6 @@ COMMAND={command_list}
 
 ${{COMMAND[$PBS_ARRAY_INDEX]}}
 """
-
-
-def commands2bash_array(command_group: List[Command]) -> str:
-    """Convert the list of commands to a bash array."""
-    return_string = "( \\\n"
-    for command in command_group:
-        return_string += '"' + command.cmd.strip() + '" \\\n'
-    return_string += ")"
-    return return_string
 
 
 def parse_setup(options: Union[List, str]) -> str:
@@ -136,9 +127,7 @@ def pbs_header(**kwargs):
     return header_string
 
 
-def create_pbs_file(
-    command_group: List[Command], pbs_options: Mapping[str, Any]
-) -> str:
+def create_pbs_file(job: Job, pbs_options: Mapping[str, Any]) -> str:
     """Substitute values into a template pbs file.
 
     This substitues the values in the pbs section of the input file
@@ -155,12 +144,12 @@ def create_pbs_file(
     # Create header
     header_string = pbs_header(**pbs_options)
 
-    num_jobs = len(command_group)
-    logger.debug("Number of jobs: %d", num_jobs)
-    if num_jobs > 1:
-        header_string += "#PBS -J 0-{}\n".format(num_jobs - 1)
+    num_commands = len(job)
+    logger.debug("Number of commands: %d", num_commands)
+    if num_commands > 1:
+        header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
     else:
         header_string += "PBS_ARRAY_INDEX=0\n"
     return header_string + PBS_TEMPLATE.format(
-        command_list=commands2bash_array(command_group), setup=setup_string
+        command_list=job.as_bash_array(), setup=setup_string
     )
