@@ -8,7 +8,7 @@
 
 """Command class."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class Command(object):
@@ -63,9 +63,11 @@ class Job(object):
     """A task to perfrom within a simulation."""
     commands: List[Command]
     shell: str = "bash"
+    scheduler_options: Optional[Dict[str, Any]] = None
 
-    def __init__(self, commands) -> None:
+    def __init__(self, commands, scheduler_options=None) -> None:
         self.commands = commands
+        self.scheduler_options = scheduler_options
 
     def __iter__(self):
         return iter(self.commands)

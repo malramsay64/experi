@@ -9,19 +9,12 @@
 """Test the running of commands."""
 
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Iterator
 
 import pytest
 
 from experi.commands import Command, Job
-from experi.run import run_bash_commands
-
-
-@pytest.fixture(scope="function")
-def tmp_dir():
-    with TemporaryDirectory() as dst:
-        yield dst
+from experi.run import process_scheduler, run_bash_jobs
 
 
 @pytest.fixture
@@ -59,6 +52,19 @@ def test_bash_operators(tmp_dir, create_jobs, command):
 
     """
     jobs = create_jobs(command)
-    run_bash_commands(jobs, tmp_dir)
-    assert (Path(tmp_dir) / "passed").exists()
-    assert not (Path(tmp_dir) / "failed").exists()
+    run_bash_jobs(jobs, tmp_dir)
+    assert (tmp_dir / "passed").exists()
+    assert not (tmp_dir / "failed").exists()
+
+
+@pytest.mark.parametrize(
+    "structure",
+    [
+        {"result": "shell"},
+        {"shell": True, "result": "shell"},
+        {"shell": False, "pbs": "true", "result": "pbs"},
+        {"shell": False, "pbs": False, "result": "shell"},
+    ],
+)
+def test_process_scheduler(structure):
+    assert process_scheduler(structure) == structure["result"]

@@ -127,7 +127,7 @@ def pbs_header(**kwargs):
     return header_string
 
 
-def create_pbs_file(job: Job, pbs_options: Mapping[str, Any]) -> str:
+def create_pbs_file(job: Job) -> str:
     """Substitute values into a template pbs file.
 
     This substitues the values in the pbs section of the input file
@@ -135,7 +135,10 @@ def create_pbs_file(job: Job, pbs_options: Mapping[str, Any]) -> str:
     default options.
 
     """
-    pbs_options = deepcopy(pbs_options)
+    if job.scheduler_options is None:
+        pbs_options = {}
+    else:
+        pbs_options = deepcopy(job.scheduler_options)
     try:
         setup_string = parse_setup(pbs_options["setup"])
         del pbs_options["setup"]

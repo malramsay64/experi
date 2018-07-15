@@ -103,7 +103,9 @@ def uniqueify(my_list: Any) -> List[Any]:
     return [x for x in my_list if x not in seen and not seen.add(x)]
 
 
-def process_jobs(jobs: List[Dict], matrix: matrix_type) -> Iterator[Job]:
+def process_jobs(
+    jobs: List[Dict], matrix: matrix_type, scheduler_options: Dict[str, Any] = None
+) -> Iterator[Job]:
     assert jobs is not None
 
     logger.debug("Found %d jobs in file", len(jobs))
@@ -112,7 +114,7 @@ def process_jobs(jobs: List[Dict], matrix: matrix_type) -> Iterator[Job]:
         command = job.get("command")
         assert command is not None
         assert isinstance(command, (str, dict))
-        yield Job(process_command(command, matrix))
+        yield Job(process_command(command, matrix), scheduler_options)
 
 
 def process_command(command: command_input, matrix: matrix_type) -> List[Command]:
@@ -138,7 +140,9 @@ def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
     return structure
 
 
-def process_structure(structure: Dict[str, Any], directory=Path.cwd()) -> None:
+def process_structure(
+    structure: Dict[str, Any], scheduler: str = "shell"
+) -> Iterator[Job]:
     input_variables = structure.get("variables")
     if input_variables is None:
         raise KeyError('The key "variables" was not found in the input file.')
@@ -148,35 +152,40 @@ def process_structure(structure: Dict[str, Any], directory=Path.cwd()) -> None:
     variables = list(variable_matrix(input_variables))
     assert variables
 
-    jobs_dict = structure.get("jobs")
-    if jobs_dict is not None:
-        jobs = process_jobs(jobs_dict, variables)
-    else:
-        input_command = structure.get("command")
-        if isinstance(input_command, list):
-            command_list = [{"command": cmd} for cmd in input_command]
-        else:
-            command_list = [{"command": input_command}]
-
-        jobs = process_jobs(command_list, variables)
+    scheduler_options = None
 
     # Check for pbs options
-    if structure.get("pbs"):
-        pbs_options = structure.get("pbs")
-        if pbs_options is True:
-            pbs_options = {}
-        assert isinstance(pbs_options, dict)
+    if structure.get(scheduler):
+        scheduler_options = structure.get(scheduler)
+        if scheduler_options is True:
+            scheduler_options = {}
+        assert isinstance(scheduler_options, dict)
         if structure.get("name"):
             # set the name attribute in pbs to global name if no name defined in pbs
-            pbs_options.setdefault("name", structure.get("name"))
-        run_pbs_commands(jobs, pbs_options, directory)
-        return
+            scheduler_options.setdefault("name", structure.get("name"))
 
-    run_bash_commands(jobs, directory)
-    return
+    jobs_dict = structure.get("jobs")
+    if jobs_dict is None:
+        input_command = structure.get("command")
+        if isinstance(input_command, list):
+            jobs_dict = [{"command": cmd} for cmd in input_command]
+        else:
+            jobs_dict = [{"command": input_command}]
+
+    yield from process_jobs(jobs_dict, variables, scheduler_options)
 
 
-def run_bash_commands(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None:
+def run_commands(
+    jobs: Iterator[Job], scheduler: str = "shell", directory=Path.cwd()
+) -> None:
+    assert scheduler in ["shell", "pbs"]
+    if scheduler == "shell":
+        run_bash_jobs(jobs, directory)
+    elif scheduler == "pbs":
+        run_pbs_jobs(jobs, directory)
+
+
+def run_bash_jobs(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None:
     """Submit commands to the bash shell.
 
     This function runs the commands iteratively but handles errors in the
@@ -206,11 +215,8 @@ def run_bash_commands(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> 
             return
 
 
-def run_pbs_commands(
-    jobs: Iterator[Job],
-    pbs_options: Dict[str, Any],
-    directory: PathLike = Path.cwd(),
-    basename: str = "experi",
+def run_pbs_jobs(
+    jobs: Iterator[Job], directory: PathLike = Path.cwd(), basename: str = "experi"
 ) -> None:
     """Submit a series of commands to a batch scheduler.
 
@@ -248,7 +254,7 @@ def run_pbs_commands(
     prev_jobids: List[str] = []
     for index, job in enumerate(jobs):
         # Generate pbs file
-        content = create_pbs_file(job, pbs_options)
+        content = create_pbs_file(job)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
         with fname.open("w") as dst:
@@ -276,6 +282,28 @@ def run_pbs_commands(
             prev_jobids.append(cmd_res.decode().strip())
 
 
+def process_scheduler(structure: Dict[str, Any]) -> str:
+    """Get the scheduler to run the jobs.
+
+    Determine the shell to run the command from the input file. This checks for the presence of keys
+    in the input file corresponding to the different schedulers. The schedulers that are supported
+    are
+
+    - shell, and
+    - pbs
+
+    listed in the order of precedence. The first scheduler with a truthy value in the input file is
+    the value returned by this function. Where no truthy values are found the defualt value is
+    "shell.
+
+    """
+    if structure.get("shell"):
+        return "shell"
+    if structure.get("pbs"):
+        return "pbs"
+    return "shell"
+
+
 def _set_verbosity(ctx, param, value):
     if value == 1:
         logging.basicConfig(level=logging.INFO)
@@ -298,4 +326,6 @@ def main(input_file) -> None:
     # Process and run commands
     input_file = Path(input_file)
     structure = read_file(input_file)
-    process_structure(structure, input_file.parent)
+    scheduler = process_scheduler(structure)
+    jobs = process_structure(structure, scheduler)
+    run_commands(jobs, scheduler, input_file.parent)

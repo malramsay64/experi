@@ -14,7 +14,7 @@ import pytest
 
 from experi.commands import Command, Job
 from experi.pbs import create_pbs_file
-from experi.run import process_structure, read_file
+from experi.run import process_structure, read_file, run_commands
 
 DEFAULT_PBS = """#!/bin/bash
 #PBS -N experi
@@ -48,13 +48,13 @@ def test_jobs_as_bash_array(job, result):
 
 
 def test_default_pbs():
-    assert create_pbs_file(Job([Command("echo 1")]), {}) == DEFAULT_PBS
+    assert create_pbs_file(Job([Command("echo 1")])) == DEFAULT_PBS
 
 
-def test_pbs_creation():
-    directory = Path("test/data/pbs")
-    structure = read_file(directory / "experiment.yml")
-    process_structure(structure, directory)
+def test_pbs_creation(tmp_dir):
+    structure = read_file("test/data/pbs/experiment.yml")
+    jobs = process_structure(structure, scheduler="pbs")
+    run_commands(jobs, "pbs", tmp_dir)
     expected = structure["result"]
-    with (directory / "experi_00.pbs").open("r") as result:
+    with (tmp_dir / "experi_00.pbs").open("r") as result:
         assert result.read().strip() == expected.strip()
