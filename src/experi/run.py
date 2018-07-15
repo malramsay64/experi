@@ -30,6 +30,9 @@ PathLike = Union[str, Path]  # pylint: disable=invalid-name
 
 logger = logging.getLogger(__name__)
 
+matrix_type = List[Dict[str, Any]]
+command_input = Union[str, Dict[str, Any]]
+
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Merge a list of dictionaries into a single dictionary.
@@ -100,32 +103,30 @@ def uniqueify(my_list: Any) -> List[Any]:
     return [x for x in my_list if x not in seen and not seen.add(x)]
 
 
-def process_command(
-    commands: Union[str, List[str]], matrix: List[Dict[str, Any]]
-) -> Iterator[Job]:
+def process_jobs(jobs: List[Dict], matrix: matrix_type) -> Iterator[Job]:
+    assert jobs is not None
+
+    logger.debug("Found %d jobs in file", len(jobs))
+
+    for job in jobs:
+        command = job.get("command")
+        assert command is not None
+        assert isinstance(command, (str, dict))
+        yield Job(process_command(command, matrix))
+
+
+def process_command(command: command_input, matrix: matrix_type) -> List[Command]:
     """Generate all combinations of commands given a variable matrix.
 
     Processes the commands to be sequences of strings.
     """
-    # error checking
-    if commands is None:
-        raise KeyError('The "command" key was not found in the input file.')
-
-    # Ensure commands is a list
-    if isinstance(commands, (str, dict)):
-        commands = [commands]
-
-    logger.debug("Found %d commands in file", len(commands))
-
-    for command in commands:
-        # create command objects
-        assert isinstance(command, (str, dict))
-        if isinstance(command, str):
-            c_list = [Command(command, variables=variables) for variables in matrix]
-        else:
-            c_list = [Command(**command, variables=variables) for variables in matrix]
-
-        yield Job(uniqueify(c_list))
+    assert command is not None
+    assert isinstance(command, (str, dict))
+    if isinstance(command, str):
+        command_list = [Command(command, variables=variables) for variables in matrix]
+    else:
+        command_list = [Command(**command, variables=variables) for variables in matrix]
+    return uniqueify(command_list)
 
 
 def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
@@ -137,15 +138,7 @@ def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
     return structure
 
 
-def process_file(filename: PathLike = "experiment.yml") -> None:
-    """Process the commands and variables in a file."""
-    # Ensure filename is a Path
-    filename = Path(filename)
-
-    # Read input file
-    logger.debug("Reading file %s", str(filename))
-    structure = read_file(filename)
-
+def process_structure(structure: Dict[str, Any], directory=Path.cwd()) -> None:
     input_variables = structure.get("variables")
     if input_variables is None:
         raise KeyError('The key "variables" was not found in the input file.')
@@ -155,9 +148,17 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
     variables = list(variable_matrix(input_variables))
     assert variables
 
-    input_command = structure.get("command")
-    assert isinstance(input_command, (list, str))
-    jobs = process_command(input_command, variables)
+    jobs_dict = structure.get("jobs")
+    if jobs_dict is not None:
+        jobs = process_jobs(jobs_dict, variables)
+    else:
+        input_command = structure.get("command")
+        if isinstance(input_command, list):
+            command_list = [{"command": cmd} for cmd in input_command]
+        else:
+            command_list = [{"command": input_command}]
+
+        jobs = process_jobs(command_list, variables)
 
     # Check for pbs options
     if structure.get("pbs"):
@@ -168,10 +169,10 @@ def process_file(filename: PathLike = "experiment.yml") -> None:
         if structure.get("name"):
             # set the name attribute in pbs to global name if no name defined in pbs
             pbs_options.setdefault("name", structure.get("name"))
-        run_pbs_commands(jobs, pbs_options, filename.parent)
+        run_pbs_commands(jobs, pbs_options, directory)
         return
 
-    run_bash_commands(jobs, filename.parent)
+    run_bash_commands(jobs, directory)
     return
 
 
@@ -295,4 +296,6 @@ def _set_verbosity(ctx, param, value):
 )
 def main(input_file) -> None:
     # Process and run commands
-    process_file(input_file)
+    input_file = Path(input_file)
+    structure = read_file(input_file)
+    process_structure(structure, input_file.parent)
