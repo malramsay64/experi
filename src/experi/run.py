@@ -187,16 +187,19 @@ def run_bash_commands(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> 
     logger.debug("Running commands in bash shell")
     # iterate through command groups
     for job in jobs:
+        # Check shell exists
+        if shutil.which(job.shell) is None:
+            raise ProcessLookupError("The shell '{job.shell}' was not found.")
+
         failed = False
         for command in job:
-            try:
-                logger.info(command.cmd)
-                subprocess.check_call(command.cmd.split(), cwd=str(directory))
-            except ProcessLookupError:
+            logger.info(command.cmd)
+            result = subprocess.run(
+                [job.shell, "-c", f"{command.cmd}"], cwd=str(directory)
+            )
+            if result.returncode != 0:
                 failed = True
-                logger.error(
-                    "Command failed: check PATH is correctly set\n\t%s", command
-                )
+                logger.error("Command failed: %s", command)
         if failed:
             logger.error("A command failed, not continuing further.")
             return
