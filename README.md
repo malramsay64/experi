@@ -61,7 +61,7 @@ into more depth on how this tool has helped my workflow.
 What about ...?
 ---------------------
 
- - [Sumatra][] is a tool for managing and tracking projects,
+ - [Sumatra] is a tool for managing and tracking projects,
     with a focus on running a single experiment at a time and the
     reproducibility of the results. Experi is more about running many
     simulations with a range of parameters, the reproducibility aspect is
@@ -69,7 +69,7 @@ What about ...?
     a much better job of the reproducibility than experi, capturing version
     numbers and executable paths.
 
-- [SciPipe][] Is a workflow manager similar to [SciLuigi][], [Airflow][] or any
+- [SciPipe] is a workflow manager similar to [SciLuigi], [Airflow] or any
     number of other examples. These tools can be incredibly powerful,
     specifying complex networks of dependent tasks and managing their
     completion. However, they have a learning curve and can be difficult to
@@ -78,11 +78,18 @@ What about ...?
     also uses the task scheduler for the management of dependent jobs, albeit
     the functionality is currently very basic.
 
+- [Snakemake] is a workflow management tool, very similar to [GNU Make] which
+    supports submitting jobs to a HPC scheduler. I personally have no experience
+    using it, however from reading the documentation it is a highly configurable
+    tool with far more functionality than Experi. Experi is more suitable is the
+    handling of complex specification of variables and using the scheduler for
+    control of scheduling.
+
 
 Installation
 ------------
 
-Experi is currently only compatible with python 3.6.
+Experi is currently compatible with python>==3.6
 
 ```bash
 pip3 install experi
@@ -148,6 +155,8 @@ pip3 install --user experi
 [SciPipe]: http://scipipe.org/
 [SciLuigi]: https://github.com/pharmbio/sciluigi
 [Airflow]: https://airflow.apache.org/
+[Snakemake]: https://snakemake.readthedocs.io/en/stable/
+[GNU Make]: https://www.gnu.org/software/make/
 [experiment examples]: https://github.com/malramsay64/experi/tree/master/examples
 [experiment docs]: https://github.com/malramsay64/experi/blob/master/input_file.md
 [experi blog post]: https://malramsay.com/post/experi_a_tool_for_computational_experiments/
