@@ -8,13 +8,11 @@
 
 """Test the building of pbs files."""
 
-from pathlib import Path
-
 import pytest
 
 from experi.commands import Command, Job
 from experi.pbs import create_pbs_file
-from experi.run import process_structure, read_file, run_commands
+from experi.run import process_structure, read_file, run_jobs
 
 DEFAULT_PBS = """#!/bin/bash
 #PBS -N experi
@@ -54,7 +52,7 @@ def test_default_pbs():
 def test_pbs_creation(tmp_dir):
     structure = read_file("test/data/pbs/experiment.yml")
     jobs = process_structure(structure, scheduler="pbs")
-    run_commands(jobs, "pbs", tmp_dir)
+    run_jobs(jobs, "pbs", tmp_dir)
     expected = structure["result"]
     with (tmp_dir / "experi_00.pbs").open("r") as result:
         assert result.read().strip() == expected.strip()

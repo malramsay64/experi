@@ -184,7 +184,7 @@ def process_structure(
     yield from process_jobs(jobs_dict, variables, scheduler_options)
 
 
-def run_commands(
+def run_jobs(
     jobs: Iterator[Job], scheduler: str = "shell", directory=Path.cwd()
 ) -> None:
     assert scheduler in ["shell", "pbs"]
@@ -337,4 +337,4 @@ def main(input_file) -> None:
     structure = read_file(input_file)
     scheduler = process_scheduler(structure)
     jobs = process_structure(structure, scheduler)
-    run_commands(jobs, scheduler, input_file.parent)
+    run_jobs(jobs, scheduler, input_file.parent)
