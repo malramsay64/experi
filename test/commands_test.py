@@ -17,14 +17,16 @@ from experi.run import uniqueify
 def test_command_simple():
     cmd = "test"
     command = Command(cmd=cmd)
-    assert command.cmd == cmd
+    assert command.cmd == [cmd]
+    assert str(command) == cmd
 
 
 def test_command_substitution():
     cmd = "test {var1}"
     variables = {"var1": "1.0"}
     command = Command(cmd=cmd, variables=variables)
-    assert command.cmd == cmd.format(**variables)
+    assert command.cmd == [cmd.format(**variables)]
+    assert str(command) == cmd.format(**variables)
 
 
 def test_creates_substitution():
@@ -32,7 +34,8 @@ def test_creates_substitution():
     creates = "test.out"
     variables = {"var1": "1.0"}
     command = Command(cmd=cmd, creates=creates, variables=variables)
-    assert command.cmd == cmd.format(creates=creates, **variables)
+    assert command.cmd == [cmd.format(creates=creates, **variables)]
+    assert str(command) == cmd.format(creates=creates, **variables)
 
 
 def test_requires_substitution():
@@ -40,7 +43,8 @@ def test_requires_substitution():
     requires = "test.in"
     variables = {"var1": "1.0"}
     command = Command(cmd=cmd, requires=requires, variables=variables)
-    assert command.cmd == cmd.format(requires=requires, **variables)
+    assert command.cmd == [cmd.format(requires=requires, **variables)]
+    assert str(command) == cmd.format(requires=requires, **variables)
 
 
 def test_creates_complex_substitution():
@@ -49,7 +53,8 @@ def test_creates_complex_substitution():
     variables = {"var1": "1.0"}
     command = Command(cmd=cmd, creates=creates, variables=variables)
     creates = creates.format(**variables)
-    assert command.cmd == cmd.format(creates=creates, **variables)
+    assert command.cmd == [cmd.format(creates=creates, **variables)]
+    assert str(command) == cmd.format(creates=creates, **variables)
 
 
 def test_requires_complex_substitution():
@@ -58,13 +63,14 @@ def test_requires_complex_substitution():
     variables = {"var1": "1.0"}
     command = Command(cmd=cmd, requires=requires, variables=variables)
     requires = requires.format(**variables)
-    assert command.cmd == cmd.format(requires=requires, **variables)
+    assert command.cmd == [cmd.format(requires=requires, **variables)]
+    assert str(command) == cmd.format(requires=requires, **variables)
 
 
 def test_hashable_command():
     cmd = "test"
     command = Command(cmd=cmd)
-    assert hash(command) == hash(cmd)
+    assert hash(command) == hash((cmd,))
     cmd_dict = {command: "Success"}
     assert cmd_dict.get(command) == "Success"
 
@@ -84,3 +90,9 @@ def test_command_equality():
             super().__init__(cmd)
 
     assert Subcommand("test") != Command("test")
+
+
+def test_cmd_list():
+    command = Command(cmd=["test"] * 5)
+    assert command.cmd == ["test"] * 5
+    assert str(command) == " && ".join(["test"] * 5)

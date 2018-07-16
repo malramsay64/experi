@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from experi.run import process_command, read_file, variable_matrix
+from experi.run import process_command, process_jobs, read_file, variable_matrix
 
-test_cases = Path("test/data/iter").glob("test*.yml")
+test_cases = sorted(Path("test/data/iter").glob("*.yml"))
 
 
 @pytest.mark.xfail(
@@ -26,11 +26,23 @@ test_cases = Path("test/data/iter").glob("test*.yml")
 )
 @pytest.mark.parametrize("test_file", test_cases)
 def test_behaviour(test_file):
-    test = read_file(test_file)
-    variables = list(variable_matrix(test["variables"]))
+    structure = read_file(test_file)
+    variables = list(variable_matrix(structure["variables"]))
     print(variables)
-    print(test["command"])
     result = []
-    for command_group in process_command(test["command"], variables):
-        result.append([command.cmd for command in command_group])
-    assert result == test["result"]
+
+    jobs_dict = structure.get("jobs")
+    if jobs_dict is not None:
+        jobs = process_jobs(jobs_dict, variables)
+    else:
+        input_command = structure.get("command")
+        if isinstance(input_command, list):
+            command_list = [{"command": cmd} for cmd in input_command]
+        else:
+            command_list = [{"command": input_command}]
+
+        jobs = process_jobs(command_list, variables)
+
+    for job in jobs:
+        result.append([str(command) for command in job])
+    assert result == structure["result"]
