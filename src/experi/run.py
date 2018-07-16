@@ -113,7 +113,6 @@ def process_jobs(
     for job in jobs:
         command = job.get("command")
         assert command is not None
-        assert isinstance(command, (str, dict))
         yield Job(process_command(command, matrix), scheduler_options)
 
 
@@ -123,11 +122,21 @@ def process_command(command: command_input, matrix: matrix_type) -> List[Command
     Processes the commands to be sequences of strings.
     """
     assert command is not None
-    assert isinstance(command, (str, dict))
     if isinstance(command, str):
         command_list = [Command(command, variables=variables) for variables in matrix]
+    elif isinstance(command, list):
+        command_list = [Command(command, variables=variables) for variables in matrix]
     else:
-        command_list = [Command(**command, variables=variables) for variables in matrix]
+        if command.get("command") is not None:
+            cmd = command.get("command")
+        else:
+            cmd = command.get("cmd")
+        creates = command.get("creates", "")
+        requires = command.get("requires", "")
+
+        command_list = [
+            Command(cmd, variables, creates, requires) for variables in matrix
+        ]
     return uniqueify(command_list)
 
 
@@ -203,13 +212,13 @@ def run_bash_jobs(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None
 
         failed = False
         for command in job:
-            logger.info(command.cmd)
-            result = subprocess.run(
-                [job.shell, "-c", f"{command.cmd}"], cwd=str(directory)
-            )
-            if result.returncode != 0:
-                failed = True
-                logger.error("Command failed: %s", command)
+            for cmd in command:
+                logger.info(cmd)
+                result = subprocess.run([job.shell, "-c", f"{cmd}"], cwd=str(directory))
+                if result.returncode != 0:
+                    failed = True
+                    logger.error("Command failed: %s", command)
+                    break
         if failed:
             logger.error("A command failed, not continuing further.")
             return

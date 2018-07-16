@@ -8,24 +8,24 @@
 
 """Command class."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class Command(object):
     """A command to be run for an experiment."""
-    _cmd: str
+    _cmd: List[str]
     variables: Dict[str, Any]
     _creates: str = ""
     _requires: str = ""
 
     def __init__(
         self,
-        cmd: str,
+        cmd: Union[List[str], str],
         variables: Dict[str, Any] = None,
         creates: str = "",
         requires: str = "",
     ) -> None:
-        self._cmd = cmd
+        self.cmd = cmd
         if variables is not None:
             self.variables = variables
         else:
@@ -42,13 +42,26 @@ class Command(object):
         return self._requires.format(**self.variables)
 
     @property
-    def cmd(self) -> str:
-        return self._cmd.format(
+    def cmd(self) -> List[str]:
+        return [self._format_string(cmd) for cmd in self._cmd]
+
+    @cmd.setter
+    def cmd(self, value) -> List[str]:
+        if isinstance(value, str):
+            self._cmd = [value]
+        else:
+            self._cmd = list(value)
+
+    def _format_string(self, string: str) -> str:
+        return string.format(
             creates=self.creates, requires=self.requires, **self.variables
         )
 
+    def __iter__(self):
+        yield from self.cmd
+
     def __str__(self) -> str:
-        return self.cmd
+        return " && ".join(self.cmd)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, type(self)):
@@ -56,7 +69,7 @@ class Command(object):
         return False
 
     def __hash__(self):
-        return hash(self.cmd)
+        return hash(tuple(self.cmd))
 
 
 class Job(object):
@@ -83,6 +96,6 @@ class Job(object):
         """
         return_string = "( \\\n"
         for command in self:
-            return_string += '"' + command.cmd.strip() + '" \\\n'
+            return_string += '"' + str(command) + '" \\\n'
         return_string += ")"
         return return_string

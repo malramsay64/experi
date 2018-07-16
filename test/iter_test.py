@@ -18,7 +18,7 @@ import pytest
 
 from experi.run import process_command, process_jobs, read_file, variable_matrix
 
-test_cases = sorted(Path("test/data/iter").glob("test*.yml"))
+test_cases = sorted(Path("test/data/iter").glob("*.yml"))
 
 
 @pytest.mark.xfail(
@@ -44,5 +44,5 @@ def test_behaviour(test_file):
         jobs = process_jobs(command_list, variables)
 
     for job in jobs:
-        result.append([command.cmd for command in job])
+        result.append([str(command) for command in job])
     assert result == structure["result"]
