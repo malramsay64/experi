@@ -22,8 +22,8 @@ from .commands import Job
 logger = logging.getLogger(__name__)
 
 
-PBS_TEMPLATE = """
-cd "$PBS_O_WORKDIR"
+SCEDULER_TEMPLATE = """
+cd "{workdir}"
 {setup}
 
 COMMAND={command_list}
@@ -126,6 +126,22 @@ def pbs_header(**kwargs):
     return header_string
 
 
+def slurm_header(**kwargs):
+    """Parse arbitrary pbs options into a header."""
+    header_string = "#!/bin/bash\n"
+
+    # Parse arbitrary options
+    for key, val in kwargs.items():
+        if len(key) > 1:
+            logger.warning("Arbitrary key passed: --%s %s", key, val)
+            header_string += "#SBATCH --{} {}\n".format(key, val)
+        else:
+            logger.warning("Arbitrary key passed: -%s %s", key, val)
+            header_string += "#SBATCH -{} {}\n".format(key, val)
+
+    return header_string
+
+
 def create_pbs_file(job: Job) -> str:
     """Substitute values into a template pbs file.
 
@@ -152,6 +168,39 @@ def create_pbs_file(job: Job) -> str:
         header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
     else:
         header_string += "PBS_ARRAY_INDEX=0\n"
+    return header_string + SCHEDULER_TEMPLATE.format(
+        workdir=r"$PBS_O_WORKDIR", command_list=job.as_bash_array(), setup=setup_string
+    )
+
+
+def create_slurm_file(job: Job) -> str:
+    """Substitute values into a template pbs file.
+
+    This substitues the values in the pbs section of the input file
+    into a simple template pbs file. Values not specified will use
+    default options.
+
+    """
+    if job.scheduler_options is None:
+        scheduler_options = {}
+    else:
+        scheduler_options = deepcopy(job.scheduler_options)
+    try:
+        setup_string = scheduler_options(scheduler_options["setup"])
+        del scheduler_options["setup"]
+    except KeyError:
+        setup_string = ""
+    # Create header
+    header_string = slurm_header(**scheduler_options)
+
+    num_commands = len(job)
+    logger.debug("Number of commands: %d", num_commands)
+    if num_commands > 1:
+        header_string += "#SBATCH -J 0-{}\n".format(num_commands - 1)
+    else:
+        header_string += "SLURM_ARRAY_TASK_ID=0\n"
     return header_string + PBS_TEMPLATE.format(
-        command_list=job.as_bash_array(), setup=setup_string
+        workdir=r"$SLURM_SUBMIT_DIR",
+        command_list=job.as_bash_array(),
+        setup=setup_string,
     )
