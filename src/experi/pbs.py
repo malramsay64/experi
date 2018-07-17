@@ -23,13 +23,13 @@ from .commands import Command, Job
 logger = logging.getLogger(__name__)
 
 
-SCEDULER_TEMPLATE = """
+SCHEDULER_TEMPLATE = """
 cd "{workdir}"
 {setup}
 
 COMMAND={command_list}
 
-${{COMMAND[$PBS_ARRAY_INDEX]}}
+${{COMMAND[{array_index}]}}
 """
 
 
@@ -170,7 +170,10 @@ def create_pbs_file(job: Job) -> str:
     else:
         header_string += "PBS_ARRAY_INDEX=0\n"
     return header_string + SCHEDULER_TEMPLATE.format(
-        workdir=r"$PBS_O_WORKDIR", command_list=job.as_bash_array(), setup=setup_string
+        workdir=r"$PBS_O_WORKDIR",
+        command_list=job.as_bash_array(),
+        setup=setup_string,
+        array_index=r"$PBS_ARRAY_INDEX",
     )
 
 
@@ -200,8 +203,9 @@ def create_slurm_file(job: Job) -> str:
         header_string += "#SBATCH -J 0-{}\n".format(num_commands - 1)
     else:
         header_string += "SLURM_ARRAY_TASK_ID=0\n"
-    return header_string + PBS_TEMPLATE.format(
+    return header_string + SCHEDULER_TEMPLATE.format(
         workdir=r"$SLURM_SUBMIT_DIR",
+        array_index=r"$SLURM_ARRAY_TASK_ID",
         command_list=job.as_bash_array(),
         setup=setup_string,
     )
