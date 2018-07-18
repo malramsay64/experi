@@ -23,6 +23,7 @@ a reference when coming back to look at the results.
     :caption: Contents:
 
     installation
+    intro_to_yaml
 
 
 
