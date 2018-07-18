@@ -10,6 +10,7 @@ typing = "*"
 "jinja2" = "*"
 "e1839a8" = {path = ".", editable = true}
 "ruamel.yaml" = "*"
+sphinx-rtd-theme = "*"
 
 [dev-packages]
 mypy = "*"
