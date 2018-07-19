@@ -464,7 +464,10 @@ def run_pbs_jobs(
 
 
 def run_slurm_jobs(
-    jobs: Iterator[Job], directory: PathLike = Path.cwd(), basename: str = "experi"
+    jobs: Iterator[Job],
+    directory: PathLike = Path.cwd(),
+    basename: str = "experi",
+    dry_run: bool = False,
 ) -> None:
     """Submit a series of commands to the slurm batch scheduler.
 
@@ -523,9 +526,14 @@ def run_slurm_jobs(
             # acutally run the command
             logger.info(str(submit_cmd))
             try:
-                cmd_res = subprocess.check_output(
-                    submit_cmd + [fname.name], cwd=str(directory)
-                )
+                if dry_run:
+                    print(f"{submit_cmd} {fname.name}")
+                    prev_jobids.append("dry_run")
+                else:
+                    cmd_res = subprocess.check_output(
+                        submit_cmd + [fname.name], cwd=str(directory)
+                    )
+                    prev_jobids.append(cmd_res.decode().strip())
             except subprocess.CalledProcessError:
                 logger.error("Submitting job to the queue failed.")
                 break
