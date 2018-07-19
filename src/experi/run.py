@@ -187,7 +187,7 @@ def process_structure(
 def run_jobs(
     jobs: Iterator[Job], scheduler: str = "shell", directory=Path.cwd()
 ) -> None:
-    assert scheduler in ["shell", "pbs"]
+    assert scheduler in ["shell", "pbs", "slurm"]
     if scheduler == "shell":
         run_bash_jobs(jobs, directory)
     elif scheduler == "pbs":
