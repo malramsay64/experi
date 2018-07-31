@@ -24,6 +24,8 @@ a reference when coming back to look at the results.
 
     installation
     intro_to_yaml
+    input_file
+    examples
 
 
 
