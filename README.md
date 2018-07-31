@@ -11,6 +11,8 @@ Experi
 A framework for running command line applications with a range of different
 variables.
 
+Documentation is available on [Read the Docs][Experi Docs]
+
 How to use
 ----------
 
@@ -34,9 +36,8 @@ with the results, the commands will be run in the same directory as the
 specified file.
 
 The complicated part of getting everything running is the specification of the
-experiment in the `experiment.yml` file. For details on setting up this file,
-there are examples available in the [examples directory][experiment examples]
-and documentation available [here][experiment docs].
+experiment in the `experiment.yml` file. The details on configuring this file is available in the
+[documentation][Experi Docs input_file].
 
 Why should I use this?
 ----------------------
@@ -150,6 +151,10 @@ permissions installing to your home directory rather than for everyone.
 pip3 install --user experi
 ```
 
+For more information documentation is available on [Read the Docs][Experi Docs].
+
+[Experi Docs]: https://experi.readthedocs.io/en/latest/
+[Experi Docs input_file]: https://experi.readthedocs.io/en/latest/input_file
 [miniconda installer]: https://conda.io/miniconda.html
 [Sumatra]: http://sumatra.readthedocs.io
 [SciPipe]: http://scipipe.org/
