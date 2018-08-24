@@ -84,6 +84,7 @@ commands which are non-unique will typically have the same output, overwriting e
 this is a problem, adding an ``echo {variable}`` to the list within a command key is a reasonable
 workaround.
 
+
 Command Failure
 ~~~~~~~~~~~~~~~
 
@@ -329,6 +330,39 @@ nested in a list.
 
 Which will ``zip`` ``var1`` and ``var2``, separately zip ``var3`` and ``var4``, then take the
 product of the result of those two operations.
+
+Range Specification
+~~~~~~~~~~~~~~~~~~~
+
+In cases where the number of values for a variable are too numerous to list
+manually, Experi supports a range operator, specified using ``!arange`` like below
+
+.. code:: yaml
+
+    var: !arange 100
+
+``!arange`` reflects the use of the NumPy ``arange`` function to generate the values.
+Like the NumPy function this also has arguments for the ``start``, ``stop``, ``step``
+and ``dtype`` which can all be specified as key value pairs
+
+.. code:: yaml
+
+    var: !arange
+        start: 100
+        stop: 110
+        step: 2.5
+        dtype: float
+
+which will set ``var`` to ``[100., 102.5 105., 107.5]``. In this case this specification
+is not particularly helpful, however, for hundreds of values
+
+.. code:: yaml
+
+    var: !arange
+        stop: 500
+        step: 5
+
+this approach is a definite improvement.
 
 pbs
 ---

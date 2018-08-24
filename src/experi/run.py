@@ -19,8 +19,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Union
 
 import click
+import numpy as np
 import yaml
-from jinja2 import Environment, FileSystemLoader
 
 from .commands import Command, Job
 from .pbs import create_pbs_file
@@ -141,12 +141,47 @@ def process_command(command: command_input, matrix: matrix_type) -> List[Command
     return uniqueify(command_list)
 
 
-def read_file(filename: PathLike = "experiment.yml") -> Dict["str", Any]:
+def _range_constructor(loader, node):
+    """Support generating a list of values."""
+    try:
+        value = loader.construct_mapping(node)
+    # Support passing just a single value
+    except yaml.constructor.ConstructorError:
+        value = loader.construct_scalar(node)
+        if "." in value:
+            value = float(value)
+        else:
+            try:
+                value = int(value)
+            except ValueError:
+                raise yaml.constructor.ConstructorError(
+                    "Invalid specification for arange."
+                )
+        return list(np.arange(value))
+
+    if value.get("stop") is None:
+        raise yaml.constructor.ConstructorError("arange tag needs a stop value")
+    if value.get("start") is None:
+        return list(
+            np.arange(value["stop"], step=value.get("step"), dtype=value.get("dtype"))
+        )
+    return list(
+        np.arange(
+            value["start"],
+            value["stop"],
+            step=value.get("step"),
+            dtype=value.get("dtype"),
+        )
+    )
+
+
+def read_file(filename: PathLike = "experiment.yml") -> Dict[str, Any]:
     """Read and parse yaml file."""
-    env = Environment(loader=FileSystemLoader("."))
-    stream = env.get_template(str(filename)).render()
-    logger.debug("Input file: \n%s", stream)
-    structure = yaml.load(stream)
+    logger.debug("Input file: \n%s", filename)
+    yaml.add_constructor("!arange", _range_constructor)
+
+    with open(filename, "r") as stream:
+        structure = yaml.load(stream)
     return structure
 
 

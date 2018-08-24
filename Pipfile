@@ -7,10 +7,9 @@ name = "pypi"
 setuptools = "*"
 click = "*"
 typing = "*"
-"jinja2" = "*"
 "e1839a8" = {path = ".", editable = true}
 pyyaml = "*"
-sphinx-rtd-theme = "*"
+numpy = "*"
 
 [dev-packages]
 mypy = "*"
@@ -22,3 +21,4 @@ pytest-cov = "*"
 hypothesis = "*"
 sphinx = "*"
 sphinx-autobuild = "*"
+sphinx-rtd-theme = "*"
