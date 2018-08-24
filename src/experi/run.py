@@ -19,19 +19,20 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Union
 
 import click
+import yaml
 from jinja2 import Environment, FileSystemLoader
-from ruamel.yaml import YAML
 
 from .commands import Command, Job
 from .pbs import create_pbs_file
 
-yaml = YAML()  # pylint: disable=invalid-name
-PathLike = Union[str, Path]  # pylint: disable=invalid-name
+# pylint: disable=invalid-name
+PathLike = Union[str, Path]
 
 logger = logging.getLogger(__name__)
 
 matrix_type = List[Dict[str, Any]]
 command_input = Union[str, Dict[str, Any]]
+# pylint: enable=invalid-name
 
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:

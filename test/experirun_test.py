@@ -9,11 +9,12 @@
 """Test the command line interface to experirun."""
 
 import subprocess
-from ruamel.yaml import YAML as yaml
+
+import yaml
 
 
 def test_command():
     proc_out = subprocess.check_output(["experi"], cwd="test/data")
     with open("test/data/experiment.yml", "rb") as source:
-        testfile = yaml().load(source)
+        testfile = yaml.load(source)
     assert proc_out.decode() == testfile["result"]

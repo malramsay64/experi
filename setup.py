@@ -24,7 +24,7 @@ setup(
     version=get_version(),
     python_requires=">=3.6",
     setup_requires=[],
-    install_requires=["click", "ruamel.yaml", "typing", "jinja2"],
+    install_requires=["click", "pyyaml", "typing", "jinja2"],
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
