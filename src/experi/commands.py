@@ -9,6 +9,7 @@
 """Command class."""
 
 import logging
+from pathlib import Path
 from string import Formatter
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -131,3 +132,21 @@ class Job:
             return_string += '"' + str(command) + '" \\\n'
         return_string += ")"
         return return_string
+
+
+class File(object):
+    """An input file template for a command"""
+
+    filename: Path
+    contents: str
+
+    def __init__(self, filename: Path, contents: str) -> None:
+        self.filename = filename
+        self.contents = contents
+
+    @classmethod
+    def from_file(cls, filename: Path, input_file: Path) -> "File":
+        """Initialise a File object from an input file."""
+        with open(input_file, "r") as src:
+            dst = cls(filename, src.read())
+        return dst
