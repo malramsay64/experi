@@ -96,3 +96,10 @@ def test_cmd_list():
     command = Command(cmd=["test"] * 5)
     assert command.cmd == ["test"] * 5
     assert str(command) == " && ".join(["test"] * 5)
+
+
+@pytest.mark.parametrize("variables", [("test"), ("test", "test"), ("test1", "test2")])
+def test_get_variables(variables):
+    format_string = "{" + "}{".join(variables) + "}"
+    result = Command.get_variables(format_string)
+    assert sorted(set(variables)) == sorted(result)

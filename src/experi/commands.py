@@ -8,15 +8,18 @@
 
 """Command class."""
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from string import Formatter
+from typing import Any, Dict, List, Optional, Set, Union
 
 
 class Command(object):
     """A command to be run for an experiment."""
+
     _cmd: List[str]
     variables: Dict[str, Any]
     _creates: str = ""
     _requires: str = ""
+    __formatter = Formatter()
 
     def __init__(
         self,
@@ -32,6 +35,18 @@ class Command(object):
             self.variables = {}
         self._creates = creates
         self._requires = requires
+
+    @classmethod
+    def get_variables(cls, format_string: str) -> Set[str]:
+        """Find all the variables specified in a format string.
+
+        This returns a list of all the different variables specified in a format string,
+        that is the variables inside the braces.
+
+        """
+        return set(
+            val[1] for val in cls.__formatter.parse(format_string) if val[1] is not None
+        )
 
     @property
     def creates(self) -> str:
