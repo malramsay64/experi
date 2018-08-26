@@ -8,8 +8,12 @@
 
 """Command class."""
 
+import logging
 from string import Formatter
 from typing import Any, Dict, List, Optional, Set, Union
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class Command(object):
@@ -33,20 +37,33 @@ class Command(object):
             self.variables = variables
         else:
             self.variables = {}
+
+        # variables in cmd are a subset of those passed in
+        if self.get_variables() > set(self.variables.keys()):
+            logger.debug("Command Keys: %s", self.get_variables())
+            logger.debug("Variables Keys: %s", set(self.variables.keys()))
+            # Find missing variables
+            missing_vars = self.get_variables() - set(self.variables.keys())
+            raise ValueError(f"The following variables have no value: {missing_vars}")
+
         self._creates = creates
         self._requires = requires
 
-    @classmethod
-    def get_variables(cls, format_string: str) -> Set[str]:
+    def get_variables(self) -> Set[str]:
         """Find all the variables specified in a format string.
 
         This returns a list of all the different variables specified in a format string,
         that is the variables inside the braces.
 
         """
-        return set(
-            val[1] for val in cls.__formatter.parse(format_string) if val[1] is not None
-        )
+        variables = set()
+        for cmd in self._cmd:
+            for var in self.__formatter.parse(cmd):
+                logger.debug("Checking variable: %s", var)
+                # creates and requires are special class values
+                if var[1] is not None and var[1] not in ["creates", "requires"]:
+                    variables.add(var[1])
+        return variables
 
     @property
     def creates(self) -> str:

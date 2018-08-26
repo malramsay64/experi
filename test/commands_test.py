@@ -101,5 +101,19 @@ def test_cmd_list():
 @pytest.mark.parametrize("variables", [("test"), ("test", "test"), ("test1", "test2")])
 def test_get_variables(variables):
     format_string = "{" + "}{".join(variables) + "}"
-    result = Command.get_variables(format_string)
+    result = Command(format_string, {i: None for i in variables}).get_variables()
+    print(format_string)
     assert sorted(set(variables)) == sorted(result)
+
+
+def test_get_variables_empty():
+    result = Command("test").get_variables()
+    assert result == set()
+
+
+def test_command_init():
+    Command("test")
+    with pytest.raises(ValueError):
+        Command("{test}")
+    with pytest.raises(ValueError):
+        Command("{test1} {test2}", variables={"test1": ""})
