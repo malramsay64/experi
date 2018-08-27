@@ -11,6 +11,7 @@ install:
   - pipenv install --dev --ignore-pipfile
 
 script:
+  - pipenv run mypy src
   - pipenv run pytest
 
 after_success:
