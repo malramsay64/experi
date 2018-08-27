@@ -44,7 +44,7 @@ class Command:
             logger.debug("Variables Keys: %s", set(self.variables.keys()))
             # Find missing variables
             missing_vars = self.get_variables() - set(self.variables.keys())
-            raise ValueError(ff"The following variables have no value: {missing_vars}")
+            raise ValueError(f"The following variables have no value: {missing_vars}")
 
         self._creates = creates
         self._requires = requires
