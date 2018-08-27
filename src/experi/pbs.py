@@ -8,17 +8,16 @@
 
 """Generate pbs files for submission on batch systems.
 
-This will generate a .pbs file with all the information required to run a single command from the
-list of commands. The variables will be generated and iterated over using the job array feature of
-pbs.
-"""
+This will generate a .pbs file with all the information required to run a single command
+from the list of commands. The variables will be generated and iterated over using the
+job array feature of pbs. """
 
 import logging
-from collections import ChainMap, OrderedDict
+from collections import OrderedDict
 from copy import deepcopy
-from typing import Any, List, Mapping, Union
+from typing import Any, Dict, List, Union
 
-from .commands import Command, Job
+from .commands import Job
 
 logger = logging.getLogger(__name__)
 
@@ -130,13 +129,13 @@ def pbs_header(**kwargs):
 def create_pbs_file(job: Job) -> str:
     """Substitute values into a template pbs file.
 
-    This substitues the values in the pbs section of the input file
+    This substitutes the values in the pbs section of the input file
     into a simple template pbs file. Values not specified will use
     default options.
 
     """
     if job.scheduler_options is None:
-        pbs_options = {}
+        pbs_options: Dict[str, Any] = {}
     else:
         pbs_options = deepcopy(job.scheduler_options)
     try:

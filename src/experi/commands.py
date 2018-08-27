@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class Command(object):
+class Command:
     """A command to be run for an experiment."""
 
     _cmd: List[str]
@@ -44,7 +44,7 @@ class Command(object):
             logger.debug("Variables Keys: %s", set(self.variables.keys()))
             # Find missing variables
             missing_vars = self.get_variables() - set(self.variables.keys())
-            raise ValueError(f"The following variables have no value: {missing_vars}")
+            raise ValueError(ff"The following variables have no value: {missing_vars}")
 
         self._creates = creates
         self._requires = requires
@@ -78,7 +78,7 @@ class Command(object):
         return [self._format_string(cmd) for cmd in self._cmd]
 
     @cmd.setter
-    def cmd(self, value) -> List[str]:
+    def cmd(self, value) -> None:
         if isinstance(value, str):
             self._cmd = [value]
         else:
@@ -104,8 +104,8 @@ class Command(object):
         return hash(tuple(self.cmd))
 
 
-class Job(object):
-    """A task to perfrom within a simulation."""
+class Job:
+    """A task to perform within a simulation."""
     commands: List[Command]
     shell: str = "bash"
     scheduler_options: Optional[Dict[str, Any]] = None
@@ -123,7 +123,7 @@ class Job(object):
     def as_bash_array(self) -> str:
         """Return a representation as a bash array.
 
-        This creates a string formatted as a bash arry containing all the commands in the job.
+        This creates a string formatted as a bash array containing all the commands in the job.
 
         """
         return_string = "( \\\n"

@@ -40,6 +40,7 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     Where there are collisions the first value in the list will be set
     as this function is using ChainMap to combine the dicts.
+
     """
     return dict(ChainMap(*dicts))
 
@@ -49,15 +50,15 @@ def variable_matrix(
 ) -> Iterable[Dict[str, Any]]:
     """Process the variables into a list of the appropriate combinations.
 
-    This function performs recursive processing of the input variables, creating an iterator which
-    has all the combinations of varaibles specified in the input.
+    This function performs recursive processing of the input variables, creating an
+    iterator which has all the combinations of variables specified in the input.
 
     """
     _iters = {"product": product, "zip": zip}  # types: Dict[str, Callable]
 
     if isinstance(variables, dict):
         key_vars = []  # types: Iterable[Dict[Str, Any]]
-        # Check for iterator variable and remove if nessecary
+        # Check for iterator variable and remove if necessary
         # changing the value of the iterator for remaining levels.
         if variables.get("zip"):
             items = variables.get("zip")
@@ -95,7 +96,7 @@ def variable_matrix(
 def uniqueify(my_list: Any) -> List[Any]:
     """Remove duplicate entries in a list retaining order."""
     if sys.version_info >= (3, 6):
-        # An implementation specific detail of py3.6 is the retentation of order
+        # An implementation specific detail of py3.6 is the retention of order
         # within a dictionary. In py3.7 this becomes the documented behaviour.
         return list(dict.fromkeys(my_list))
 
@@ -121,6 +122,7 @@ def process_command(command: command_input, matrix: matrix_type) -> List[Command
     """Generate all combinations of commands given a variable matrix.
 
     Processes the commands to be sequences of strings.
+
     """
     assert command is not None
     if isinstance(command, str):
@@ -135,6 +137,7 @@ def process_command(command: command_input, matrix: matrix_type) -> List[Command
         creates = command.get("creates", "")
         requires = command.get("requires", "")
 
+        assert isinstance(cmd, (list, str))
         command_list = [
             Command(cmd, variables, creates, requires) for variables in matrix
         ]
@@ -265,16 +268,16 @@ def run_pbs_jobs(
 ) -> None:
     """Submit a series of commands to a batch scheduler.
 
-    This takes a list of strings which are the contents of the pbs files, writes the files to disk
-    and submits the job to the scheduler. Files which match the pattern of the resulting files
-    <basename>_<index>.pbs are deleted before writing the new files.
+    This takes a list of strings which are the contents of the pbs files, writes the
+    files to disk and submits the job to the scheduler. Files which match the pattern of
+    the resulting files <basename>_<index>.pbs are deleted before writing the new files.
 
-    To ensure that commands run consecutively the aditional requirement to the run script `-W
-    depend=afterok:<prev_jobid>` is added. This allows for all the components of the experiment to
-    be conducted in a single script.
+    To ensure that commands run consecutively the aditional requirement to the run
+    script `-W depend=afterok:<prev_jobid>` is added. This allows for all the components
+    of the experiment to be conducted in a single script.
 
-    Note: Running this function requires that the command `qsub` exists, implying that a job
-    scheduler is installed.
+    Note: Running this function requires that the command `qsub` exists, implying that a
+    job scheduler is installed.
 
     """
     submit_job = True
@@ -330,16 +333,16 @@ def run_pbs_jobs(
 def process_scheduler(structure: Dict[str, Any]) -> str:
     """Get the scheduler to run the jobs.
 
-    Determine the shell to run the command from the input file. This checks for the presence of keys
-    in the input file corresponding to the different schedulers. The schedulers that are supported
-    are
+    Determine the shell to run the command from the input file. This checks for the
+    presence of keys in the input file corresponding to the different schedulers. The
+    schedulers that are supported are
 
     - shell, and
     - pbs
 
-    listed in the order of precedence. The first scheduler with a truthy value in the input file is
-    the value returned by this function. Where no truthy values are found the defualt value is
-    "shell.
+    listed in the order of precedence. The first scheduler with a truthy value in the
+    input file is the value returned by this function. Where no truthy values are found
+    the defualt value is "shell.
 
     """
     if structure.get("shell"):

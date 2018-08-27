@@ -98,7 +98,7 @@ def test_cmd_list():
     assert str(command) == " && ".join(["test"] * 5)
 
 
-@pytest.mark.parametrize("variables", [("test"), ("test", "test"), ("test1", "test2")])
+@pytest.mark.parametrize("variables", [("test",), ("test", "test"), ("test1", "test2")])
 def test_get_variables(variables):
     format_string = "{" + "}{".join(variables) + "}"
     result = Command(format_string, {i: None for i in variables}).get_variables()
