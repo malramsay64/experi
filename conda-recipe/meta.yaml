@@ -23,11 +23,9 @@ requirements:
     - {{ pin_compatible('python', max_pin='x.x') }}
     - pyyaml
     - click
-    - jinja2
 
 build:
   entry_points:
     - experi = experi.run:main
-  preserve_egg_dir: True
   script: python setup.py install --single-version-externally-managed --record=record.txt
-  number: {{ GIT_DESCRIBE_NUMBER }}
+  number: 0
