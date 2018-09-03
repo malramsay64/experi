@@ -315,7 +315,7 @@ def run_pbs_jobs(
             if prev_jobids:
                 # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
                 # with the first.
-                submit_cmd += ["-W", "depend=afterok:{} ".format(",".join(prev_jobids))]
+                submit_cmd += ["-W", "depend=afterok:{} ".format(":".join(prev_jobids))]
 
             # acutally run the command
             logger.info(str(submit_cmd))
