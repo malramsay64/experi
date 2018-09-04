@@ -134,7 +134,7 @@ class Job:
         return return_string
 
 
-class File(object):
+class File:
     """An input file template for a command"""
 
     filename: Path
@@ -150,3 +150,8 @@ class File(object):
         with open(input_file, "r") as src:
             dst = cls(filename, src.read())
         return dst
+
+    def write(self) -> None:
+        """Write contents to file."""
+        with open(self.filename, "w") as dst:
+            dst.write(self.contents)
