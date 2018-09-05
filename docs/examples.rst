@@ -66,23 +66,23 @@ equilibration array job with 10 elements start.
          Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
 
     variables:
-    create_temp: 0.80
-    create_steps: 10_000_000
-    equil_steps: 100_000_000
-    output: output
-    steps: 200_000_000
-    pressure: 1.00
-    temperature:
-      - 0.30
-      - 0.32
-      - 0.34
-      - 0.36
-      - 0.38
-      - 0.40
-      - 0.42
-      - 0.44
-      - 0.46
-      - 0.50
+      create_temp: 0.80
+      create_steps: 10_000_000
+      equil_steps: 100_000_000
+      output: output
+      steps: 200_000_000
+      pressure: 1.00
+      temperature:
+        - 0.30
+        - 0.32
+        - 0.34
+        - 0.36
+        - 0.38
+        - 0.40
+        - 0.42
+        - 0.44
+        - 0.46
+        - 0.50
 
     pbs:
       setup:
@@ -111,7 +111,7 @@ possible to use them. The below example creates an input file for using with the
        echo -e "
        <file>
        " < file.in
-     - lmp_run -in file.in 
+     - lmp_run -in file.in
 
 Subdirectories
 --------------
@@ -128,4 +128,3 @@ in a separate subdirectory for each set of variables.
       - mkdir -p <direcotry>
       - cd <directory>
       - run command
-
