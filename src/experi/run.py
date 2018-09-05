@@ -16,7 +16,7 @@ import sys
 from collections import ChainMap
 from itertools import product
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Union
 
 import click
 import numpy as np
@@ -25,16 +25,15 @@ import yaml
 from .commands import Command, Job
 from .pbs import create_pbs_file
 
-# pylint: disable=invalid-name
-PathLike = Union[str, Path]
-
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
 
-
-matrix_type = List[Dict[str, Any]]
-command_input = Union[str, Dict[str, Any]]
-# pylint: enable=invalid-name
+# Type definitions
+PathLike = Union[str, Path]
+YamlValue = Union[str, int, float]
+CommandInput = Union[str, Dict[str, YamlValue]]
+VarType = Union[YamlValue, List[YamlValue], Dict[str, YamlValue]]
+VarMatrix = List[Dict[str, YamlValue]]
 
 
 def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -47,12 +46,18 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
 
 
-Variable = Union[str, int, float]
-VarType = Union[Variable, List[Variable], Dict[str, Variable]]
-IterVar = Iterable[List[Dict[str, Variable]]]
+def iterator_zip(variables: VarType, parent: str = None) -> Iterable[VarMatrix]:
+    """Apply the zip operator to a set of variables.
 
+    This uses the python zip iterator to combine multiple lists of variables such that
+    the nth variable in each list is aligned.
 
-def iterator_zip(variables: VarType, parent: str = None) -> IterVar:
+    Args:
+        variables: The variables object
+        parent: Unused
+
+    """
+
     logger.debug("Yielding from zip iterator")
     if isinstance(variables, list):
         for item in variables:
@@ -61,7 +66,18 @@ def iterator_zip(variables: VarType, parent: str = None) -> IterVar:
         yield list(variable_matrix(variables, parent, "zip"))
 
 
-def iterator_product(variables: VarType, parent: str = None) -> IterVar:
+def iterator_product(variables: VarType, parent: str = None) -> Iterable[VarMatrix]:
+    """Apply the product operator to a set of variables.
+
+    This uses the python itertools.product iterator to combine multiple variables
+    such that all possible combinations are generated. This is the default iterator
+    however this is a method of manually specifying the option.
+
+    Args:
+        variables: The variables object
+        parent: Unused
+
+    """
     logger.debug("Yielding from product iterator")
     if isinstance(variables, list):
         raise ValueError(f"Product only takes mappings of values, got {variables}")
@@ -69,7 +85,18 @@ def iterator_product(variables: VarType, parent: str = None) -> IterVar:
     yield list(variable_matrix(variables, parent, "product"))
 
 
-def iterator_combine(variables: VarType, parent: str = None) -> IterVar:
+def iterator_combine(variables: VarType, parent: str = None) -> Iterable[VarMatrix]:
+    """This performs a combination of zip and product operations.
+
+    This takes a list of values over which the zip operator is applied, however the
+    contents of each list item has the product iterator applied. This iterator is
+    syntactic sugar for the nested use of the zip and product iterators.
+
+    Args:
+        variables: The variables object
+        parent: Unused
+
+    """
     logger.debug("Yielding from combine iterator")
     if not isinstance(variables, list):
         raise ValueError(
@@ -80,7 +107,16 @@ def iterator_combine(variables: VarType, parent: str = None) -> IterVar:
         yield list(variable_matrix(item, parent, "product"))
 
 
-def iterator_arange(variables: VarType, parent: Optional[str]) -> IterVar:
+def iterator_arange(variables: VarType, parent: str) -> Iterable[VarMatrix]:
+    """Create a list of values using the numpy arange function.
+
+    Args:
+        variables: The input variables for the creation of the range
+        parent: The variable for which the values are being generated.
+
+    Returns: A list of dictionaries mapping the parent to each value.
+
+    """
     assert parent is not None
     if isinstance(variables, (int, float)):
         yield [{parent: i} for i in np.arange(variables)]
@@ -92,13 +128,13 @@ def iterator_arange(variables: VarType, parent: Optional[str]) -> IterVar:
 
     else:
         raise ValueError(
-            f"arange keyword only takes a dict as arguments, got {variables} of type {type(variables)}"
+            f"The arange keyword only takes a dict as arguments, got {variables} of type {type(variables)}"
         )
 
 
 def variable_matrix(
     variables: VarType, parent: str = None, iterator: str = "product"
-) -> Iterable[Dict[str, Variable]]:
+) -> Iterable[Dict[str, YamlValue]]:
     """Process the variables into a list of the appropriate combinations.
 
     This function performs recursive processing of the input variables, creating an
@@ -106,7 +142,7 @@ def variable_matrix(
 
     """
     _iters: Dict[str, Callable] = {"product": product, "zip": zip}
-    _special_keys: Dict[str, Callable[[VarType, Optional[str]], IterVar]] = {
+    _special_keys: Dict[str, Callable[[VarType, Any], Iterable[VarMatrix]]] = {
         "zip": iterator_zip,
         "product": iterator_product,
         "arange": iterator_arange,
@@ -114,7 +150,7 @@ def variable_matrix(
     }
 
     if isinstance(variables, dict):
-        key_vars: List[List[Dict[str, Variable]]] = []
+        key_vars: List[List[Dict[str, YamlValue]]] = []
 
         # Handling of specialised iterators
         for key, function in _special_keys.items():
@@ -128,14 +164,13 @@ def variable_matrix(
                     iterator = "zip"
                 del variables[key]
 
-        if variables:
-            for key, value in variables.items():
-                key_vars.append(list(variable_matrix(value, key, iterator)))
+        for key, value in variables.items():
+            key_vars.append(list(variable_matrix(value, key, iterator)))
 
         logger.debug("key vars: %s", key_vars)
 
         # Iterate through all possible products generating a dictionary
-        for i in _iters[iterator](*key_vars):  # types: ignore
+        for i in _iters[iterator](*key_vars):
             logger.debug("dicts: %s", i)
             yield combine_dictionaries(i)
 
@@ -164,7 +199,7 @@ def uniqueify(my_list: Any) -> List[Any]:
 
 
 def process_jobs(
-    jobs: List[Dict], matrix: matrix_type, scheduler_options: Dict[str, Any] = None
+    jobs: List[Dict], matrix: VarMatrix, scheduler_options: Dict[str, Any] = None
 ) -> Iterator[Job]:
     assert jobs is not None
 
@@ -176,7 +211,7 @@ def process_jobs(
         yield Job(process_command(command, matrix), scheduler_options)
 
 
-def process_command(command: command_input, matrix: matrix_type) -> List[Command]:
+def process_command(command: CommandInput, matrix: VarMatrix) -> List[Command]:
     """Generate all combinations of commands given a variable matrix.
 
     Processes the commands to be sequences of strings.
@@ -192,8 +227,8 @@ def process_command(command: command_input, matrix: matrix_type) -> List[Command
             cmd = command.get("command")
         else:
             cmd = command.get("cmd")
-        creates = command.get("creates", "")
-        requires = command.get("requires", "")
+        creates = str(command.get("creates", ""))
+        requires = str(command.get("requires", ""))
 
         assert isinstance(cmd, (list, str))
         command_list = [
@@ -284,11 +319,14 @@ def process_structure(
 def run_jobs(
     jobs: Iterator[Job], scheduler: str = "shell", directory=Path.cwd()
 ) -> None:
-    assert scheduler in ["shell", "pbs"]
     if scheduler == "shell":
         run_bash_jobs(jobs, directory)
     elif scheduler == "pbs":
         run_pbs_jobs(jobs, directory)
+    else:
+        raise ValueError(
+            f"Scheduler '{scheduler}'was not recognised. Possible values are ['shell', 'pbs']"
+        )
 
 
 def run_bash_jobs(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None:
