@@ -237,8 +237,12 @@ and resulting in the output
     bonjour Alice
     bonjour Charmaine
 
-Complex specifications
-~~~~~~~~~~~~~~~~~~~~~~
+Iterators
+~~~~~~~~~
+
+Product
+.......
+
 
 In the above examples we are using the try everything approach, however there is more control over
 how variables are specified. By default we are using a product iterator, which could be explicitly
@@ -257,7 +261,14 @@ defined like so
                 - Bob
                 - Charmaine
 
-however if we know that Alice speaks English, Bob speaks French, and Charmaine speaks Spanish we can
+Note that the product iterator doesn't support a list of variables.
+There is way that a list of values makes sense,
+so will raise a ``ValueError``.
+
+Zip Iterator
+............
+
+However, if we know that Alice speaks English, Bob speaks French, and Charmaine speaks Spanish we can
 use a similar specification, however instead of a product iterator we can use zip.
 
 .. code:: yaml
@@ -331,36 +342,122 @@ nested in a list.
 Which will ``zip`` ``var1`` and ``var2``, separately zip ``var3`` and ``var4``, then take the
 product of the result of those two operations.
 
-Range Specification
-~~~~~~~~~~~~~~~~~~~
+Chain Iterator
+..............
+
+This handles the scenario where a single simulation has separate components,
+which in my case is two separate pressures.
+Each pressure I run the simulation at has a different sequence of temperatures
+
+.. code:: yaml
+
+   variables:
+       chain:
+           - pressure: 1.0
+             temperature: [0.2, 0.3, 0.4]
+           - pressure: 13.0
+             temperature: [1.0, 1.5, 2.0]
+
+This will generate the list of values
+
+.. code::
+
+    pressure: 1.0, temperature: 0.2
+    pressure: 1.0, temperature: 0.3
+    pressure: 1.0, temperature: 0.4
+    pressure: 13.0, temperature: 1.0
+    pressure: 13.0, temperature: 1.5
+    pressure: 13.0, temperature: 2.0
+
+The ``append`` keyword is an alias for ``chain`` and operates in exactly the same way.
+
+Cycle Iterator
+..............
+
+This is an iterator which is particularly useful
+when combined with the chain and zip iterators.
+It will cycle through a sequence of values a specified number of times
+
+.. code:: yaml
+
+   variables:
+       cycle:
+           times: 2
+           steps: [100, 10, 1]
+
+
+This will give the list
+
+.. code::
+
+    steps: 100
+    steps: 10
+    steps: 1
+    steps: 100
+    steps: 10
+    steps: 1
+
+Which when combined with the chain example above we can get
+
+.. code:: yaml
+
+   variables:
+     zip:
+       chain:
+         - pressure: 1.0
+           temperature: [0.2, 0.3, 0.4]
+         - pressure: 13.0
+           temperature: [1.0, 1.5, 2.0]
+       cycle:
+         times: 2
+         steps: [100, 10, 1]
+
+Where the number of steps follows the change in temperature.
+
+.. code::
+
+    pressure: 1.0, temperature: 0.2, steps: 100
+    pressure: 1.0, temperature: 0.3, steps: 10
+    pressure: 1.0, temperature: 0.4 steps: 10
+    pressure: 13.0, temperature: 1.0, steps: 100
+    pressure: 13.0, temperature: 1.5, steps: 10
+    pressure: 13.0, temperature: 2.0, steps: 1
+
+Arange Iterator
+...............
 
 In cases where the number of values for a variable are too numerous to list
-manually, Experi supports a range operator, specified using ``!arange`` like below
+manually, Experi supports a range iterator, specified using ``arange`` like below
 
 .. code:: yaml
 
-    var: !arange 100
+    var:
+        arange: 100
 
-``!arange`` reflects the use of the NumPy ``arange`` function to generate the values.
-Like the NumPy function this also has arguments for the ``start``, ``stop``, ``step``
-and ``dtype`` which can all be specified as key value pairs
+``arange`` reflects the use of the NumPy ``arange`` function to generate the values,
+and is less likely to be a variable name.
+Like the NumPy function this iterators supports arguments for
+``start``, ``stop``, ``step`` and ``dtype``,
+which can all be specified as key value pairs
 
 .. code:: yaml
 
-    var: !arange
-        start: 100
-        stop: 110
-        step: 2.5
-        dtype: float
+    var:
+        arange:
+            start: 100
+            stop: 110
+            step: 2.5
+            dtype: float
 
 which will set ``var`` to ``[100., 102.5 105., 107.5]``. In this case this specification
 is not particularly helpful, however, for hundreds of values
 
 .. code:: yaml
 
-    var: !arange
-        stop: 500
-        step: 5
+    var:
+        arange:
+            stop: 500
+            step: 5
 
 this approach is a definite improvement.
 
