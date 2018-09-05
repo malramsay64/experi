@@ -16,7 +16,7 @@ import sys
 from collections import ChainMap
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Union
 
 import click
 import numpy as np
@@ -29,6 +29,8 @@ from .pbs import create_pbs_file
 PathLike = Union[str, Path]
 
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
+
 
 matrix_type = List[Dict[str, Any]]
 command_input = Union[str, Dict[str, Any]]
@@ -45,43 +47,99 @@ def combine_dictionaries(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
     return dict(ChainMap(*dicts))
 
 
+Variable = Union[str, int, float]
+VarType = Union[Variable, List[Variable], Dict[str, Variable]]
+IterVar = Iterable[List[Dict[str, Variable]]]
+
+
+def iterator_zip(variables: VarType, parent: str = None) -> IterVar:
+    logger.debug("Yielding from zip iterator")
+    if isinstance(variables, list):
+        for item in variables:
+            yield list(variable_matrix(item, parent, "zip"))
+    else:
+        yield list(variable_matrix(variables, parent, "zip"))
+
+
+def iterator_product(variables: VarType, parent: str = None) -> IterVar:
+    logger.debug("Yielding from product iterator")
+    if isinstance(variables, list):
+        raise ValueError(f"Product only takes mappings of values, got {variables}")
+
+    yield list(variable_matrix(variables, parent, "product"))
+
+
+def iterator_combine(variables: VarType, parent: str = None) -> IterVar:
+    logger.debug("Yielding from combine iterator")
+    if not isinstance(variables, list):
+        raise ValueError(
+            f"Combine keyword only takes a list of arguments, got {variables}"
+        )
+
+    for item in variables:
+        yield list(variable_matrix(item, parent, "product"))
+
+
+def iterator_arange(variables: VarType, parent: Optional[str]) -> IterVar:
+    assert parent is not None
+    if isinstance(variables, (int, float)):
+        yield [{parent: i} for i in np.arange(variables)]
+
+    elif isinstance(variables, dict):
+        if not variables.get("stop"):
+            raise ValueError(f"Stop is a required keyword.")
+        yield [{parent: i} for i in np.arange(**variables)]
+
+    else:
+        raise ValueError(
+            f"arange keyword only takes a dict as arguments, got {variables} of type {type(variables)}"
+        )
+
+
 def variable_matrix(
-    variables: Dict[str, Any], parent: str = None, iterator: str = "product"
-) -> Iterable[Dict[str, Any]]:
+    variables: VarType, parent: str = None, iterator: str = "product"
+) -> Iterable[Dict[str, Variable]]:
     """Process the variables into a list of the appropriate combinations.
 
     This function performs recursive processing of the input variables, creating an
     iterator which has all the combinations of variables specified in the input.
 
     """
-    _iters = {"product": product, "zip": zip}  # types: Dict[str, Callable]
+    _iters: Dict[str, Callable] = {"product": product, "zip": zip}
+    _special_keys: Dict[str, Callable[[VarType, Optional[str]], IterVar]] = {
+        "zip": iterator_zip,
+        "product": iterator_product,
+        "arange": iterator_arange,
+        "combine": iterator_combine,
+    }
 
     if isinstance(variables, dict):
-        key_vars = []  # types: Iterable[Dict[Str, Any]]
-        # Check for iterator variable and remove if necessary
-        # changing the value of the iterator for remaining levels.
-        if variables.get("zip"):
-            items = variables.get("zip")
-            assert items is not None
-            if isinstance(items, list):
-                for item in items:
-                    key_vars.append(variable_matrix(item, None, "zip"))
-            else:
-                key_vars.append(list(variable_matrix(items, iterator="zip")))
-            del variables["zip"]
-        elif variables.get("product"):
-            logger.debug("Yielding from product iterator")
-            key_vars.append(
-                list(variable_matrix(variables["product"], iterator="product"))
-            )
-            del variables["product"]
+        key_vars: List[List[Dict[str, Variable]]] = []
 
-        for key, value in variables.items():
-            key_vars.append(list(variable_matrix(value, key, iterator)))
+        # Handling of specialised iterators
+        for key, function in _special_keys.items():
+            if variables.get(key):
+                item = variables[key]
+                assert item is not None
+                for val in function(item, parent):
+                    key_vars.append(val)
+
+                if key == "combine":
+                    iterator = "zip"
+                del variables[key]
+
+        if variables:
+            for key, value in variables.items():
+                key_vars.append(list(variable_matrix(value, key, iterator)))
+
+        logger.debug("key vars: %s", key_vars)
+
         # Iterate through all possible products generating a dictionary
         for i in _iters[iterator](*key_vars):  # types: ignore
+            logger.debug("dicts: %s", i)
             yield combine_dictionaries(i)
 
+    # Iterate through a list of values
     elif isinstance(variables, list):
         for item in variables:
             yield from variable_matrix(item, parent, iterator)
