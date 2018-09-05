@@ -1,0 +1,12 @@
+command: '{var1} {var2}'
+
+variables:
+  append:
+    - var1: single
+      var2: [0, 1, 2]
+    - var1: double
+      var2: [0, 2, 4]
+
+result: [['single 0', 'single 1', 'single 2', 'double 0', 'double 2', 'double 4']]
+
+

@@ -14,7 +14,7 @@ import shutil
 import subprocess
 import sys
 from collections import ChainMap
-from itertools import product
+from itertools import chain, product, repeat
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Union
 
@@ -80,35 +80,42 @@ def iterator_product(variables: VarType, parent: str = None) -> Iterable[VarMatr
     """
     logger.debug("Yielding from product iterator")
     if isinstance(variables, list):
-        raise ValueError(f"Product only takes mappings of values, got {variables}")
+        raise ValueError(
+            f"Product only takes mappings of values, got {variables} of type {type(variables)}"
+        )
 
     yield list(variable_matrix(variables, parent, "product"))
 
 
-def iterator_combine(variables: VarType, parent: str = None) -> Iterable[VarMatrix]:
-    """This performs a combination of zip and product operations.
+def iterator_chain(variables: VarType, parent: str = None) -> Iterable[VarMatrix]:
+    """This successively appends each element of an array to a single list of values.
 
-    This takes a list of values over which the zip operator is applied, however the
-    contents of each list item has the product iterator applied. This iterator is
-    syntactic sugar for the nested use of the zip and product iterators.
+    This takes a list of values and puts all the values generated for each element in
+    the list into a single list of values. It uses the :func:`itertools.chain` function to
+    achieve this. This function is particularly useful for specifying multiple types of
+    simulations with different parameters.
 
     Args:
         variables: The variables object
         parent: Unused
 
     """
-    logger.debug("Yielding from combine iterator")
+    logger.debug("Yielding from append iterator")
     if not isinstance(variables, list):
         raise ValueError(
-            f"Combine keyword only takes a list of arguments, got {variables}"
+            f"Append keyword only takes a list of arguments, got {variables} of type {type(variables)}"
         )
 
-    for item in variables:
-        yield list(variable_matrix(item, parent, "product"))
+    # Create a single list containing all the values
+    yield list(
+        chain.from_iterable(
+            variable_matrix(item, parent, "product") for item in variables
+        )
+    )
 
 
 def iterator_arange(variables: VarType, parent: str) -> Iterable[VarMatrix]:
-    """Create a list of values using the numpy arange function.
+    """Create a list of values using the :func:`numpy.arange` function.
 
     Args:
         variables: The input variables for the creation of the range
@@ -123,12 +130,37 @@ def iterator_arange(variables: VarType, parent: str) -> Iterable[VarMatrix]:
 
     elif isinstance(variables, dict):
         if not variables.get("stop"):
-            raise ValueError(f"Stop is a required keyword.")
+            raise ValueError(f"Stop is a required keyword for the arange iterator.")
         yield [{parent: i} for i in np.arange(**variables)]
 
     else:
         raise ValueError(
             f"The arange keyword only takes a dict as arguments, got {variables} of type {type(variables)}"
+        )
+
+
+def iterator_cycle(variables: VarType, parent: str) -> Iterable[VarMatrix]:
+    """Cycle through a list of values a specified number of times
+
+    Args:
+        variables: The input variables for the creation of the range
+        parent: The variable for which the values are being generated.
+
+    Returns: A list of dictionaries mapping the parent to each value.
+
+    """
+    if isinstance(variables, dict):
+        if variables.get("times"):
+            times = int(variables["times"])
+            del variables["times"]
+
+            yield list(variable_matrix(variables, parent, "product")) * times
+
+        else:
+            raise ValueError(f"times is a required keyword for the repeat iterator.")
+    else:
+        raise ValueError(
+            f"The repeat operator only takes a dict as arguments, got {variables} of type {type(variables)}"
         )
 
 
@@ -146,7 +178,10 @@ def variable_matrix(
         "zip": iterator_zip,
         "product": iterator_product,
         "arange": iterator_arange,
-        "combine": iterator_combine,
+        "chain": iterator_chain,
+        "append": iterator_chain,
+        "cycle": iterator_cycle,
+        "repeat": iterator_cycle,
     }
 
     if isinstance(variables, dict):
@@ -160,8 +195,6 @@ def variable_matrix(
                 for val in function(item, parent):
                     key_vars.append(val)
 
-                if key == "combine":
-                    iterator = "zip"
                 del variables[key]
 
         for key, value in variables.items():
