@@ -497,6 +497,9 @@ def _set_verbosity(ctx, param, value):
     "--input-file",
     type=click.Path(exists=True, dir_okay=False),
     default="experiment.yml",
+    help="""Path to a YAML file containing experiment data. Note that the experiment
+    will be run from the directory in which the file exists, not the directory the
+    script was run from.""",
 )
 @click.option(
     "--use-dependencies",
@@ -511,7 +514,12 @@ def _set_verbosity(ctx, param, value):
     help="Don't run commands or submit jobs, just show the commands that would be run.",
 )
 @click.option(
-    "-v", "--verbose", callback=_set_verbosity, expose_value=False, count=True
+    "-v",
+    "--verbose",
+    callback=_set_verbosity,
+    expose_value=False,
+    count=True,
+    help="Increase the verbosity of logging events.",
 )
 def main(input_file, use_dependencies, dry_run) -> None:
     # Process and run commands

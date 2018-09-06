@@ -1,7 +1,7 @@
 Introduction to YAML
 ====================
 
-Experi uses the `YAML`_ file format for the input file since it has widespread use and support and
+Experi uses the YAML_ file format for the input file since it has widespread use and support and
 the format is simple for a human to parse. From the perspective of a python developer, YAML is a
 method of specifying python data structures in a text file. A key construct of the YAML file is the
 mapping of a *key* to a *value*, like a python dictionary. Also like a python dictionary the
@@ -79,3 +79,9 @@ recommended for further reading
 - `Wikipedia`_
 - `YAML Lint`_
 - `yaml.org`_
+
+.. _Ansible YAML Reference: https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html
+.. _YAML:
+.. _Wikipedia: https://en.wikipedia.org/wiki/YAML
+.. _YAML Lint: http://www.yamllint.com/
+.. _yaml.org: http://yaml.org/
