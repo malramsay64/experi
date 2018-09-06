@@ -282,7 +282,7 @@ def read_file(filename: PathLike = "experiment.yml") -> Dict[str, Any]:
     logger.debug("Input file: \n%s", filename)
 
     with open(filename, "r") as stream:
-        structure = yaml.load(stream)
+        structure = yaml.safe_load(stream)
     return structure
 
 
