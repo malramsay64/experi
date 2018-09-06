@@ -31,39 +31,46 @@ equilibration array job with 10 elements start.
 
     # experiment.yml
     jobs:
-      - command: >
-         mpirun -np 12
-         sdrun
-         --pressure {pressure}
-         --init-temp {init_temp}
-         --temperature {create_temp}
-         --lattice-lengths {cell_dims}
-         --output {output}
-         --steps {create_steps}
-         create
-         Trimer-P{pressure:.2f}-T{create_temp:.2f}.gsd
+      - command:
+          cmd: >
+            mpirun -np 12
+            sdrun
+            --pressure {pressure}
+            --init-temp {init_temp}
+            --temperature {create_temp}
+            --lattice-lengths {cell_dims}
+            --output {output}
+            --steps {create_steps}
+            create
+            {creates}
+          creates: Trimer-P{pressure:.2f}-T{create_temp:.2f}.gsd
 
-      - command: >
-         mpirun -np 12
-         sdrun
-         --pressure {pressure}
-         --init-temp {create_temp}
-         --temperature {temperature}
-         --output {output}
-         --steps {equil_steps}
-         equil
-         Trimer-P{pressure:.2f}-T{create_temp:.2f}.gsd
-         Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
+      - command:
+          cmd: >
+            mpirun -np 12
+            sdrun
+            --pressure {pressure}
+            --init-temp {create_temp}
+            --temperature {temperature}
+            --output {output}
+            --steps {equil_steps}
+            equil
+            {requires}
+            {creates}
+          requires: Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
+          creates: Trimer-P{pressure:.2f}-T{create_temp:.2f}.gsd
 
-      - command: >
-         mpirun -np 12
-         sdrun
-         --pressure {pressure}
-         --temperature {temperature}
-         --output {output}
-         --steps {steps}
-         prod
-         Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
+      - command:
+          cmd: >
+            mpirun -np 12
+            sdrun
+            --pressure {pressure}
+            --temperature {temperature}
+            --output {output}
+            --steps {steps}
+            prod
+            {requires}
+          requires: Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
 
     variables:
       create_temp: 0.80
