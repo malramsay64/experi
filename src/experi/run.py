@@ -239,7 +239,11 @@ def uniqueify(my_list: Any) -> List[Any]:
 
 
 def process_jobs(
-    jobs: List[Dict], matrix: VarMatrix, scheduler_options: Dict[str, Any] = None
+    jobs: List[Dict],
+    matrix: VarMatrix,
+    scheduler_options: Dict[str, Any] = None,
+    directory: Path = None,
+    use_dependencies: bool = False,
 ) -> Iterator[Job]:
     assert jobs is not None
 
@@ -248,7 +252,12 @@ def process_jobs(
     for job in jobs:
         command = job.get("command")
         assert command is not None
-        yield Job(process_command(command, matrix), scheduler_options)
+        yield Job(
+            process_command(command, matrix),
+            scheduler_options,
+            directory,
+            use_dependencies,
+        )
 
 
 def process_command(command: CommandInput, matrix: VarMatrix) -> List[Command]:
@@ -287,7 +296,10 @@ def read_file(filename: PathLike = "experiment.yml") -> Dict[str, Any]:
 
 
 def process_structure(
-    structure: Dict[str, Any], scheduler: str = "shell"
+    structure: Dict[str, Any],
+    scheduler: str = "shell",
+    directory: Path = None,
+    use_dependencies: bool = False,
 ) -> Iterator[Job]:
     input_variables = structure.get("variables")
     if input_variables is None:
@@ -318,7 +330,9 @@ def process_structure(
         else:
             jobs_dict = [{"command": input_command}]
 
-    yield from process_jobs(jobs_dict, variables, scheduler_options)
+    yield from process_jobs(
+        jobs_dict, variables, scheduler_options, directory, use_dependencies
+    )
 
 
 def run_jobs(
@@ -469,12 +483,20 @@ def _set_verbosity(ctx, param, value):
     default="experiment.yml",
 )
 @click.option(
+    "--use-dependencies",
+    default=False,
+    is_flag=True,
+    help="Use the dependencies specified in the command to reduce the processing",
+)
+@click.option(
     "-v", "--verbose", callback=_set_verbosity, expose_value=False, count=True
 )
-def main(input_file) -> None:
+def main(input_file, use_dependencies) -> None:
     # Process and run commands
     input_file = Path(input_file)
     structure = read_file(input_file)
     scheduler = process_scheduler(structure)
-    jobs = process_structure(structure, scheduler)
+    jobs = process_structure(
+        structure, scheduler, Path(input_file.parent), use_dependencies
+    )
     run_jobs(jobs, scheduler, input_file.parent)

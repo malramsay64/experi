@@ -68,3 +68,35 @@ def test_bash_operators(tmp_dir, create_jobs, command):
 )
 def test_process_scheduler(structure):
     assert process_scheduler(structure) == structure["result"]
+
+
+def test_dependencies(tmp_dir):
+    command = Command(cmd="echo contents > {creates}", creates="test")
+    jobs = [Job([command], directory=Path(tmp_dir), use_dependencies=True)]
+    create_file = tmp_dir / "test"
+    create_file.write_text("success")
+
+    run_bash_jobs(jobs, tmp_dir)
+    assert "success" in create_file.read_text()
+
+    jobs[0].use_dependencies = False
+    run_bash_jobs(jobs, tmp_dir)
+    assert "contents" in create_file.read_text()
+
+
+def test_dependencies_list(tmp_dir):
+    commands = [
+        Command(cmd=f"echo contents{i} > {{creates}}", creates=f"test{i}")
+        for i in range(5)
+    ]
+    jobs = [Job(commands, directory=Path(tmp_dir), use_dependencies=True)]
+    create_files = [tmp_dir / f"test{i}" for i in range(5)]
+
+    create_files[1].write_text("success")
+
+    run_bash_jobs(jobs, tmp_dir)
+    for i in range(5):
+        if i == 1:
+            assert "success" in create_files[i].read_text()
+        else:
+            assert f"contents{i}" in create_files[i].read_text()

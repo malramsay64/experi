@@ -9,6 +9,7 @@
 """Command class."""
 
 import logging
+from pathlib import Path
 from string import Formatter
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -109,13 +110,28 @@ class Job:
     commands: List[Command]
     shell: str = "bash"
     scheduler_options: Optional[Dict[str, Any]] = None
+    use_dependencies: bool = False
+    directory: Optional[Path] = None
 
-    def __init__(self, commands, scheduler_options=None) -> None:
+    def __init__(
+        self, commands, scheduler_options=None, directory=None, use_dependencies=False
+    ) -> None:
+        if use_dependencies and directory is None:
+            raise ValueError("Directory must be set when overwrite is False.")
+
         self.commands = commands
         self.scheduler_options = scheduler_options
+        self.directory = directory
+        self.use_dependencies = use_dependencies
 
     def __iter__(self):
-        return iter(self.commands)
+        if self.use_dependencies and self.directory is None:
+            raise ValueError("Directory must be set when overwrite is False.")
+        for command in self.commands:
+            if self.use_dependencies and (self.directory / command.creates).is_file():
+                # This file already exists, we don't need to create it again
+                continue
+            yield command
 
     def __len__(self) -> int:
         return len(self.commands)
