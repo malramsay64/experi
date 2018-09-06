@@ -14,7 +14,7 @@ from typing import Iterator
 import pytest
 
 from experi.commands import Command, Job
-from experi.run import process_scheduler, run_bash_jobs
+from experi.run import process_scheduler, run_bash_jobs, run_pbs_jobs
 
 
 @pytest.fixture
@@ -100,3 +100,11 @@ def test_dependencies_list(tmp_dir):
             assert "success" in create_files[i].read_text()
         else:
             assert f"contents{i}" in create_files[i].read_text()
+
+
+def test_dry_run(tmp_dir):
+    command = Command(cmd="echo contents > {creates}", creates="test")
+    jobs = [Job([command], directory=Path(tmp_dir))]
+    create_file = tmp_dir / "test"
+    run_bash_jobs(jobs, tmp_dir, dry_run=True)
+    assert not create_file.exists()

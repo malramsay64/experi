@@ -288,7 +288,7 @@ def process_command(command: CommandInput, matrix: VarMatrix) -> List[Command]:
 
 def read_file(filename: PathLike = "experiment.yml") -> Dict[str, Any]:
     """Read and parse yaml file."""
-    logger.debug("Input file: \n%s", filename)
+    logger.debug("Input file: %s", filename)
 
     with open(filename, "r") as stream:
         structure = yaml.safe_load(stream)
@@ -336,19 +336,24 @@ def process_structure(
 
 
 def run_jobs(
-    jobs: Iterator[Job], scheduler: str = "shell", directory=Path.cwd()
+    jobs: Iterator[Job],
+    scheduler: str = "shell",
+    directory=Path.cwd(),
+    dry_run: bool = False,
 ) -> None:
     if scheduler == "shell":
-        run_bash_jobs(jobs, directory)
+        run_bash_jobs(jobs, directory, dry_run=dry_run)
     elif scheduler == "pbs":
-        run_pbs_jobs(jobs, directory)
+        run_pbs_jobs(jobs, directory, dry_run=dry_run)
     else:
         raise ValueError(
             f"Scheduler '{scheduler}'was not recognised. Possible values are ['shell', 'pbs']"
         )
 
 
-def run_bash_jobs(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None:
+def run_bash_jobs(
+    jobs: Iterator[Job], directory: PathLike = Path.cwd(), dry_run: bool = False
+) -> None:
     """Submit commands to the bash shell.
 
     This function runs the commands iteratively but handles errors in the
@@ -368,18 +373,26 @@ def run_bash_jobs(jobs: Iterator[Job], directory: PathLike = Path.cwd()) -> None
         for command in job:
             for cmd in command:
                 logger.info(cmd)
-                result = subprocess.run([job.shell, "-c", f"{cmd}"], cwd=str(directory))
-                if result.returncode != 0:
-                    failed = True
-                    logger.error("Command failed: %s", command)
-                    break
+                if dry_run:
+                    print(f"{job.shell} -c '{cmd}'")
+                else:
+                    result = subprocess.run(
+                        [job.shell, "-c", f"{cmd}"], cwd=str(directory)
+                    )
+                    if result.returncode != 0:
+                        failed = True
+                        logger.error("Command failed: %s", command)
+                        break
         if failed:
             logger.error("A command failed, not continuing further.")
             return
 
 
 def run_pbs_jobs(
-    jobs: Iterator[Job], directory: PathLike = Path.cwd(), basename: str = "experi"
+    jobs: Iterator[Job],
+    directory: PathLike = Path.cwd(),
+    basename: str = "experi",
+    dry_run: bool = False,
 ) -> None:
     """Submit a series of commands to a batch scheduler.
 
@@ -391,8 +404,8 @@ def run_pbs_jobs(
     script `-W depend=afterok:<prev_jobid>` is added. This allows for all the components
     of the experiment to be conducted in a single script.
 
-    Note: Running this function requires that the command `qsub` exists, implying that a
-    job scheduler is installed.
+    Note: Having this function submit jobs requires that the command `qsub` exists,
+    implying that a job scheduler is installed.
 
     """
     submit_job = True
@@ -423,7 +436,7 @@ def run_pbs_jobs(
         with fname.open("w") as dst:
             dst.write(content)
 
-        if submit_job:
+        if submit_job or dry_run:
             # Construct command
             submit_cmd = ["qsub"]
 
@@ -432,17 +445,20 @@ def run_pbs_jobs(
                 # with the first.
                 submit_cmd += ["-W", "depend=afterok:{} ".format(":".join(prev_jobids))]
 
-            # acutally run the command
+            # actually run the command
             logger.info(str(submit_cmd))
             try:
-                cmd_res = subprocess.check_output(
-                    submit_cmd + [fname.name], cwd=str(directory)
-                )
+                if dry_run:
+                    print(f"{submit_cmd} {fname.name}")
+                    prev_jobids.append("dry_run")
+                else:
+                    cmd_res = subprocess.check_output(
+                        submit_cmd + [fname.name], cwd=str(directory)
+                    )
+                    prev_jobids.append(cmd_res.decode().strip())
             except subprocess.CalledProcessError:
                 logger.error("Submitting job to the queue failed.")
                 break
-
-            prev_jobids.append(cmd_res.decode().strip())
 
 
 def process_scheduler(structure: Dict[str, Any]) -> str:
@@ -489,9 +505,15 @@ def _set_verbosity(ctx, param, value):
     help="Use the dependencies specified in the command to reduce the processing",
 )
 @click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Don't run commands or submit jobs, just show the commands that would be run.",
+)
+@click.option(
     "-v", "--verbose", callback=_set_verbosity, expose_value=False, count=True
 )
-def main(input_file, use_dependencies) -> None:
+def main(input_file, use_dependencies, dry_run) -> None:
     # Process and run commands
     input_file = Path(input_file)
     structure = read_file(input_file)
@@ -499,4 +521,4 @@ def main(input_file, use_dependencies) -> None:
     jobs = process_structure(
         structure, scheduler, Path(input_file.parent), use_dependencies
     )
-    run_jobs(jobs, scheduler, input_file.parent)
+    run_jobs(jobs, scheduler, input_file.parent, dry_run)
