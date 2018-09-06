@@ -3,7 +3,8 @@
 command: echo {arg1}
 
 variables:
-  arg1: !arange 5
+  arg1:
+    arange: 5
 
 result:
   - ['echo 0', 'echo 1', 'echo 2', 'echo 3', 'echo 4']
