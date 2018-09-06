@@ -14,23 +14,21 @@ import numpy as np
 import pytest
 import yaml
 
-from experi.run import _range_constructor
-
-yaml.add_constructor("!arange", _range_constructor)
+from experi.run import variable_matrix
 
 
 def get_ranges():
     return [
         (
             """
-            !arange
+            arange:
                 stop: 10
             """,
             list(np.arange(10)),
         ),
         (
             """
-            !arange
+            arange:
                 start: 1
                 stop: 10
             """,
@@ -38,7 +36,7 @@ def get_ranges():
         ),
         (
             """
-            !arange
+            arange:
                 start: 1.
                 stop: 10
             """,
@@ -46,35 +44,41 @@ def get_ranges():
         ),
         (
             """
-            !arange 10
+            arange: 10
             """,
             list(np.arange(10)),
         ),
     ]
 
 
+def parse_string(string):
+    result = yaml.safe_load(dedent(string))
+    return list(variable_matrix(result, parent="test"))
+
+
+def generate_comparison(values):
+    return [{"test": value} for value in values]
+
+
 @pytest.mark.parametrize("string, expected", get_ranges())
 def test_range(string, expected):
-    result = yaml.load(dedent(string))
+    result = parse_string(string)
+    expected = generate_comparison(expected)
     assert result == expected
 
 
 def test_stop_required():
-    with pytest.raises(yaml.constructor.ConstructorError):
-        yaml.load("!arange {start: 10}")
+    with pytest.raises(ValueError):
+        parse_string("arange: {start: 10}")
 
 
 def test_range_errors():
-    with pytest.raises(yaml.constructor.ConstructorError):
-        yaml.load("!arange: 10")
-    with pytest.raises(yaml.constructor.ConstructorError):
-        yaml.load("!arange")
-    with pytest.raises(yaml.constructor.ConstructorError):
-        yaml.load("!arange [1, 2, 3]")
+    with pytest.raises(ValueError):
+        parse_string("arange: [1, 2, 3]")
 
 
 def create_string(start, stop, step, dtype):
-    return f"!arange {{start: {start}, stop: {stop}, step: {step}, dtype: {dtype}}}"
+    return f"arange: {{start: {start}, stop: {stop}, step: {step}, dtype: {dtype}}}"
 
 
 # No none in start to remove conditional in test
@@ -83,6 +87,6 @@ def create_string(start, stop, step, dtype):
 @pytest.mark.parametrize("step", [1, 10, 10.])
 @pytest.mark.parametrize("dtype", ["float", "int"])
 def test_values(start, stop, step, dtype):
-    result = yaml.load(create_string(start, stop, step, dtype))
-    expected = list(np.arange(start, stop, step, dtype))
+    result = parse_string(create_string(start, stop, step, dtype))
+    expected = generate_comparison(np.arange(start, stop, step, dtype))
     assert result == expected

@@ -114,6 +114,12 @@ def iterator_chain(variables: VarType, parent: str = None) -> Iterable[VarMatrix
     )
 
 
+def arange(start=None, stop=None, step=None, dtype=None) -> np.ndarray:
+    if stop and not start:
+        return np.arange(stop)
+    return np.arange(start=start, stop=stop, step=step, dtype=dtype)
+
+
 def iterator_arange(variables: VarType, parent: str) -> Iterable[VarMatrix]:
     """Create a list of values using the :func:`numpy.arange` function.
 
@@ -129,9 +135,10 @@ def iterator_arange(variables: VarType, parent: str) -> Iterable[VarMatrix]:
         yield [{parent: i} for i in np.arange(variables)]
 
     elif isinstance(variables, dict):
-        if not variables.get("stop"):
+        if variables.get("stop"):
+            yield [{parent: i} for i in arange(**variables)]
+        else:
             raise ValueError(f"Stop is a required keyword for the arange iterator.")
-        yield [{parent: i} for i in np.arange(**variables)]
 
     else:
         raise ValueError(
@@ -270,44 +277,9 @@ def process_command(command: CommandInput, matrix: VarMatrix) -> List[Command]:
     return uniqueify(command_list)
 
 
-def _range_constructor(loader, node):
-    """Support generating a list of values."""
-    try:
-        value = loader.construct_mapping(node)
-    # Support passing just a single value
-    except yaml.constructor.ConstructorError:
-        value = loader.construct_scalar(node)
-        if "." in value:
-            value = float(value)
-        else:
-            try:
-                value = int(value)
-            except ValueError:
-                raise yaml.constructor.ConstructorError(
-                    "Invalid specification for arange."
-                )
-        return list(np.arange(value))
-
-    if value.get("stop") is None:
-        raise yaml.constructor.ConstructorError("arange tag needs a stop value")
-    if value.get("start") is None:
-        return list(
-            np.arange(value["stop"], step=value.get("step"), dtype=value.get("dtype"))
-        )
-    return list(
-        np.arange(
-            value["start"],
-            value["stop"],
-            step=value.get("step"),
-            dtype=value.get("dtype"),
-        )
-    )
-
-
 def read_file(filename: PathLike = "experiment.yml") -> Dict[str, Any]:
     """Read and parse yaml file."""
     logger.debug("Input file: \n%s", filename)
-    yaml.add_constructor("!arange", _range_constructor)
 
     with open(filename, "r") as stream:
         structure = yaml.load(stream)
