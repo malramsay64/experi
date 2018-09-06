@@ -1,82 +1,72 @@
-name: Trimer Dynamics
-
+# experiment.yml
 jobs:
   - command:
+      creates: Trimer-P{pressure:.2f}-T{create_temp:.2f}.gsd
       cmd: >
+        mpirun -np 12
         sdrun
         --pressure {pressure}
+        --init-temp {init_temp}
         --temperature {create_temp}
         --lattice-lengths {cell_dims}
-        --output {outdir}
+        --output {output}
         --steps {create_steps}
         create
         {creates}
-      creates: Trimer-T{create_temp:.2f}-P{pressure:.2f}.gsd
+
   - command:
+      requires: Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
+      creates: Trimer-P{pressure:.2f}-T{create_temp:.2f}.gsd
       cmd: >
+        mpirun -np 12
         sdrun
         --pressure {pressure}
         --init-temp {create_temp}
         --temperature {temperature}
-        --output {outdir}
-        --steps {steps}
+        --output {output}
+        --steps {equil_steps}
         equil
-        --equil-type {equil_type}
         {requires}
         {creates}
-      requires: Trimer-T{create_temp:.2f}-P{pressure:.2f}.gsd
-      creates: Trimer-T{temperature:.2f}-P{pressure:.2f}.gsd
+
   - command:
+      requires: Trimer-P{pressure:.2f}-T{temperature:.2f}.gsd
       cmd: >
+        mpirun -np 12
         sdrun
         --pressure {pressure}
         --temperature {temperature}
-        --output {outdir}
+        --output {output}
         --steps {steps}
+        prod
         {requires}
-      requires: Trimer-T{temperature:.2f}-P{pressure:.2f}.gsd
 
 variables:
-  create_steps: 1_000_000
-  equil_type: liquid
-  outdir: .
-  cell_dims: 25 25
-  zip:
-    cycle:
-      times: 2
-      steps:
-        - 100_000_000
-        - 100_000_000
-        - 100_000_000
-        - 10_000_000
-        - 10_000_000
-        - 10_000_000
-        - 1_000_000
+  create_temp: 0.80
+  create_steps: 10_000_000
+  equil_steps: 100_000_000
+  output: output
+  steps: 200_000_000
+  pressure: 1.00
+  temperature:
+    - 0.30
+    - 0.32
+    - 0.34
+    - 0.36
+    - 0.38
+    - 0.40
+    - 0.42
+    - 0.44
+    - 0.46
+    - 0.50
 
-    chain:
-      - pressure: 1.0
-        create_temp: 1.50
-        temperature:
-          - 0.30
-          - 0.32
-          - 0.34
-          - 0.36
-          - 0.40
-          - 0.45
-          - 0.50
-      - pressure: 13.0
-        create_temp: 3.0
-        temperature:
-          - 1.30
-          - 1.32
-          - 1.34
-          - 1.36
-          - 1.40
-          - 1.45
-          - 1.50
 pbs:
   setup:
-    - source "$HOME/.miniconda/etc/profile.d/conda.sh"
-    - conda activate simulations
-  ncpus: 12
-  walltime: 320:00:00
+    - export PATH="$HOME/.pyenv/versions/crystal/bin:$PATH"
+  cpus: 12
+  memory: 16gb
+  walltime: 100:00:00
+  project: PRJ-CrysGrowth
+  o: logs
+  j: oe
+

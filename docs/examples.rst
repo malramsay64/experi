@@ -27,7 +27,7 @@ for the step which is then used for each temperature in the equal step. By runni
 I will have a job with a single task for the first step which once finished will allow the
 equilibration array job with 10 elements start.
 
-.. literalinclude:: examples/dynamics.yml
+.. literalinclude:: ../examples/trimer-dynamics.yml
    :language: yaml
 
 Input Files
