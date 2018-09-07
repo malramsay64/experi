@@ -1,4 +1,4 @@
-# Test extra variable defined
+# Creates test
 
 command:
   cmd: echo 'command {var1} > {creates}'
