@@ -19,12 +19,25 @@ def get_version():
 with open("README.md") as f:
     long_description = f.read()
 
+install_require = ["click", "pyyaml", "numpy"]
+dev_require = [
+    "mypy",
+    "pylint",
+    "pytest",
+    "black",
+    "coverage",
+    "pytest-cov",
+    "hypothesis",
+]
+docs_require = ["sphinx", "sphinx-autobuild", "sphinx-rtd-theme", "sphinx-click"]
+
 setup(
     name="experi",
     version=get_version(),
     python_requires=">=3.6",
     setup_requires=[],
-    install_requires=["click", "pyyaml", "typing", "numpy"],
+    install_requires=install_require,
+    extras_require={"dev": dev_require, "docs": docs_require},
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,

@@ -4,22 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-setuptools = "*"
-click = "*"
-typing = "*"
-"e1839a8" = {path = ".", editable = true}
-pyyaml = "*"
-numpy = "*"
+experi = {path = ".", editable = true}
 
 [dev-packages]
-mypy = "*"
-pylint = "*"
-pytest = "*"
-black = "==18.5b0"
-coverage = "*"
-pytest-cov = "*"
-hypothesis = "*"
-sphinx = "*"
-sphinx-autobuild = "*"
-sphinx-rtd-theme = "*"
-sphinx-click = "*"
+experi = {editable = true, path = ".", extras = ["docs", "dev"]}
