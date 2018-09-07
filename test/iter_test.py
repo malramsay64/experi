@@ -24,7 +24,7 @@ test_cases = sorted(Path("test/data/iter").glob("*.yml"))
 @pytest.mark.xfail(
     sys.version_info < (3, 6), reason="Dictionaries nondeterministic in python < 3.6"
 )
-@pytest.mark.parametrize("test_file", test_cases)
+@pytest.mark.parametrize("test_file", test_cases, ids=[i.stem for i in test_cases])
 def test_behaviour(test_file):
     structure = read_file(test_file)
     variables = list(variable_matrix(structure["variables"]))
