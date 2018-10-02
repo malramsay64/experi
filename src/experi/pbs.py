@@ -185,11 +185,11 @@ def create_slurm_file(job: Job) -> str:
 
     """
     if job.scheduler_options is None:
-        scheduler_options = {}
+        scheduler_options: Dict[str, Any] = {}
     else:
         scheduler_options = deepcopy(job.scheduler_options)
     try:
-        setup_string = scheduler_options(scheduler_options["setup"])
+        setup_string = scheduler_options["setup"]
         del scheduler_options["setup"]
     except KeyError:
         setup_string = ""
