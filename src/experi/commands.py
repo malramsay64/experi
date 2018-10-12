@@ -107,6 +107,7 @@ class Command:
 
 class Job:
     """A task to perform within a simulation."""
+
     commands: List[Command]
     shell: str = "bash"
     scheduler_options: Optional[Dict[str, Any]] = None
@@ -134,7 +135,7 @@ class Job:
             yield command
 
     def __len__(self) -> int:
-        return len(self.commands)
+        return len(list(self.__iter__()))
 
     def as_bash_array(self) -> str:
         """Return a representation as a bash array.

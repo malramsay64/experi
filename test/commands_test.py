@@ -8,9 +8,12 @@
 
 """Test the Command class."""
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 import pytest
 
-from experi.commands import Command
+from experi.commands import Command, Job
 from experi.run import uniqueify
 
 
@@ -85,7 +88,6 @@ def test_command_equality():
     """Test that equality compares classes not just values."""
 
     class Subcommand(Command):
-
         def __init__(self, cmd):
             super().__init__(cmd)
 
@@ -117,3 +119,18 @@ def test_command_init():
         Command("{test}")
     with pytest.raises(ValueError):
         Command("{test1} {test2}", variables={"test1": ""})
+
+
+def test_job_length():
+    job = Job([Command("echo")])
+    assert len(job) == 1
+
+
+def test_job_length_depends(tmp_dir):
+    file = tmp_dir / "test.txt"
+    file.write_text("test")
+    assert file.exists()
+    job = Job(
+        [Command("echo", creates="test.txt")], directory=tmp_dir, use_dependencies=True
+    )
+    assert len(job) == 0
