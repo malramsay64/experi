@@ -17,7 +17,7 @@ from experi.run import process_command, variable_matrix
     text(alphabet=characters(whitelist_categories=("L")), min_size=1),
     text(alphabet=characters(blacklist_characters=(":", "{", "}", "[", "]", "!", "."))),
 )
-@settings(max_examples=1000)
+@settings(max_examples=500)
 def test_variable_generality(variable_start, variable_end):
     variable_name = variable_start + variable_end
     var_dict = {variable_name: [1, 2, 3, 4, 5]}
