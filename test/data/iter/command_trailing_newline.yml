@@ -1,0 +1,17 @@
+# Test the handling of trailing newlines
+
+jobs:
+  - command:
+      cmd: >
+        echo test 1
+
+  - command:
+      cmd: >
+        echo test 2
+
+variables:
+  var: 1
+
+result: 
+  - ["echo test 1"]
+  - ["echo test 2"]

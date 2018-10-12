@@ -94,7 +94,7 @@ class Command:
         yield from self.cmd
 
     def __str__(self) -> str:
-        return " && ".join(self.cmd)
+        return " && ".join(self.cmd).strip()
 
     def __eq__(self, other) -> bool:
         if isinstance(other, type(self)):
