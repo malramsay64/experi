@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "experi"
-version = "0.2.11"
+version = "0.2.10"
 description="An interface for managing computational experiments with many independent variables."
 authors = ["Malcolm Ramsay <malramsay64@gmail.com>"]
 license = "MIT"

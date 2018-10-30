@@ -249,17 +249,16 @@ def create_header_string(scheduler: str, **kwargs) -> str:
 
 
 def get_array_string(scheduler: str, num_commands: int) -> str:
-    header_string = ""
     if scheduler.upper() == "SLURM":
         if num_commands > 1:
-            header_string += "#SBATCH -J 0-{}\n".format(num_commands - 1)
+            header_string = "#SBATCH -J 0-{}\n".format(num_commands - 1)
         else:
-            header_string += "SLURM_ARRAY_TASK_ID=0\n"
+            header_string = "SLURM_ARRAY_TASK_ID=0\n"
     elif scheduler.upper() == "PBS":
         if num_commands > 1:
-            header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
+            header_string = "#PBS -J 0-{}\n".format(num_commands - 1)
         else:
-            header_string += "PBS_ARRAY_INDEX=0\n"
+            header_string = "PBS_ARRAY_INDEX=0\n"
     else:
         raise ValueError("scheduler not recognised, must be one of [pbs|slurm]")
     return header_string
