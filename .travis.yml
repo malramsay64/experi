@@ -5,23 +5,16 @@ python:
 env:
   - PIPENV_IGNORE_VIRTUALENVS=1
 
-install:
-  - pip install pipenv
+before_install:
+  - pip install poetry
   - pip install codecov
-  - pipenv install --dev --ignore-pipfile
+
+install:
+  - poetry install
 
 script:
-  - pipenv run mypy src
-  - pipenv run pytest
+  - poetry run mypy src
+  - poetry run pytest
 
 after_success:
   - codecov
-
-deploy:
-  provider: pypi
-  user: malramsay64
-  on:
-    tags: true
-    python: '3.6'
-  password:
-    secure: IYlRIdPl09nr5fAxTqJEhE+FKF+B5Ahys1fj6N8j0k1c3NWKhX0wjaCGNm9hyrXZSiJZdqKkB/+UR7/a9LiriBrbnvXTEMWgxR4yowPWHFRetVt4kKTT5dRBVG1A3WB422ZGXvqzOh1n9ghN5kTeBngtM1R02VzkBLupmF+jfodcDPOaA8v2mHmYF11BOaRU/Tse/3SymVTq7DVPus+TLY9fc8oJe1CLuNM3OfFmfPY0LiN8LRgQAsx8XpSICvQ1ia3Lo/l11G2kP6f3XIG8fnUio4mPC06M3xxMg7gKX8NdejhB/zDPxHhY0kq974GYo/wkt3VwuYidMEPDln16BleSbGbtVglFLj4Tk4x6WNNZcf0hRqwamn1UObeHA4Ph2w8G1dTt3TQvkplB8id40Q/n1wA9fRxnYOKrJuv5WMm3I8uMvcwpZHA/LxrwBPrK+j885Oq3QNUZdc3QWdVFogqUkROfE8fZOW/I1e6pLKCWUeMsHk908xwZwMavxCPn5NSt21sTq1ZVG6G1TEr/F5ZrDOQJXocb822kzOUHLkaqexWmLV8Nvpb3VOmrORer4nF7njFlLwMjPwRcL9kD3fSeWwzoiTFZ5DOdaiISYKzOisgTS89qaaAguIx5VTDCH+ZY+gm0Ov4J8wsu5chhrEXY5ziyj02pHvzfrj/0A5I=
