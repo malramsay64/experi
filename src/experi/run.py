@@ -23,7 +23,7 @@ import numpy as np
 import yaml
 
 from .commands import Command, Job
-from .pbs import create_pbs_file
+from .pbs import create_scheduler_file
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")

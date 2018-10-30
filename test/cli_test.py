@@ -41,7 +41,7 @@ def test_missing_input_file(runner):
         assert result.exit_code != 0
 
 
-@pytest.fixture(params=["", "pbs: True"], ids=["bash", "pbs"])
+@pytest.fixture(params=["", "pbs: True"], ids=["bash", "PBS"])
 def test_file(request):
     return textwrap.dedent(
         f"""

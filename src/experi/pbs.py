@@ -34,7 +34,7 @@ ${{COMMAND[{array_index}]}}
 
 class SchedulerOptions:
     prefix: str = "#SHELL"
-    name: str = "Experi-Job"
+    name: str = "Experi_Job"
     resources: OrderedDict
     time: OrderedDict
     project: str = None
@@ -43,6 +43,11 @@ class SchedulerOptions:
     leftovers: OrderedDict
 
     def __init__(self, **kwargs) -> None:
+        # Initialise data structures with default values
+        self.resources = OrderedDict(select=1, ncpus=1)
+        self.time = OrderedDict(walltime="1:00")
+        self.leftovers = OrderedDict()
+
         for key, value in kwargs.items():
             if key in ["name", "N"]:
                 self.name = value
@@ -52,7 +57,7 @@ class SchedulerOptions:
             elif key in ["ncpus", "cpus"]:
                 self.resources["ncpus"] = value
             elif key in ["mem", "memory"]:
-                self.resources["memory"] = value
+                self.resources["mem"] = value
             elif key in ["gpus", "ngpus"]:
                 self.resources["ngpus"] = value
 
@@ -100,7 +105,9 @@ class SchedulerOptions:
         return "{} Name: {}\n".format(self.prefix, self.name)
 
     def get_mail(self) -> str:
-        return "{} Email: {}".format(self.prefix, self.email)
+        if self.email:
+            return "{} Email: {}".format(self.prefix, self.email)
+        return ""
 
     def create_header(self) -> str:
         header_string = "#!/bin/bash\n"
@@ -111,6 +118,7 @@ class SchedulerOptions:
         header_string += self.get_logging()
         header_string += self.get_mail()
         header_string += self.get_arbitrary_keys()
+        return header_string
 
 
 class PBSOptions(SchedulerOptions):
@@ -166,6 +174,7 @@ class PBSOptions(SchedulerOptions):
             # an email when a job is complete and further investigation is required.
             email_str += "{} -m ae".format(self.prefix)
             return email_str
+        return ""
 
 
 class SLURMOptions(SchedulerOptions):
@@ -175,9 +184,9 @@ class SLURMOptions(SchedulerOptions):
         resource_str = "{} --cpus-per-task {}".format(
             self.prefix, self.resources.get("ncpus")
         )
-        if self.resources.get("memory"):
+        if self.resources.get("mem"):
             resource_str += "{} --mem-per-task {}".format(
-                self.prefix, self.resources["memory"]
+                self.prefix, self.resources["mem"]
             )
         if self.resources.get("ngpus"):
             resource_str += "{} --gres=gpu:{}".format(
@@ -230,9 +239,10 @@ def parse_setup(options: Union[List, str]) -> str:
 
 
 def create_header_string(scheduler: str, **kwargs) -> str:
-    if scheduler == "PBS":
+    assert isinstance(scheduler, str)
+    if scheduler.upper() == "PBS":
         return PBSOptions(**kwargs).create_header()
-    if scheduler == "SLURM":
+    if scheduler.upper() == "SLURM":
         return SLURMOptions(**kwargs).create_header()
     raise ValueError("Scheduler needs to be one of PBS or SLURM.")
 

@@ -11,11 +11,11 @@
 import pytest
 
 from experi.commands import Command, Job
-from experi.pbs import create_pbs_file
+from experi.pbs import create_scheduler_file
 from experi.run import process_structure, read_file, run_jobs
 
 DEFAULT_PBS = """#!/bin/bash
-#PBS -N experi
+#PBS -N Experi_Job
 #PBS -l select=1:ncpus=1
 #PBS -l walltime=1:00
 PBS_ARRAY_INDEX=0
@@ -46,7 +46,7 @@ def test_jobs_as_bash_array(job, result):
 
 
 def test_default_pbs():
-    assert create_pbs_file(Job([Command("echo 1")])) == DEFAULT_PBS
+    assert create_scheduler_file("pbs", Job([Command("echo 1")])) == DEFAULT_PBS
 
 
 def test_pbs_creation(tmp_dir):
