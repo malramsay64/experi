@@ -433,6 +433,7 @@ def run_pbs_jobs(
     for index, job in enumerate(jobs):
         # Generate pbs file
         content = create_scheduler_file("pbs", job)
+        logger.debug("File contents:\n%s", content)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
         with fname.open("w") as dst:

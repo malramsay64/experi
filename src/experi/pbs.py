@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Union
 from .commands import Job
 
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
 
 
 SCHEDULER_TEMPLATE = """
@@ -37,9 +38,9 @@ class SchedulerOptions:
     name: str = "Experi_Job"
     resources: OrderedDict
     time: OrderedDict
-    project: str = None
-    log_dir: str = None
-    email: str = None
+    project: str = ""
+    log_dir: str = ""
+    email: str = ""
     leftovers: OrderedDict
 
     def __init__(self, **kwargs) -> None:
@@ -254,16 +255,19 @@ def get_array_string(scheduler: str, num_commands: int) -> str:
             header_string += "#SBATCH -J 0-{}\n".format(num_commands - 1)
         else:
             header_string += "SLURM_ARRAY_TASK_ID=0\n"
-    elif scheduler.upper == "PBS":
+    elif scheduler.upper() == "PBS":
         if num_commands > 1:
             header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
         else:
             header_string += "PBS_ARRAY_INDEX=0\n"
+    else:
+        raise ValueError("scheduler not recognised, must be one of [pbs|slurm]")
     return header_string
 
 
 def create_scheduler_file(scheduler: str, job: Job) -> str:
     """Substitute values into a template scheduler file."""
+    logger.debug("Create Scheduler File Function")
 
     if job.scheduler_options is None:
         scheduler_options: Dict[str, Any] = {}
