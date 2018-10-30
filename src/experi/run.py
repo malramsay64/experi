@@ -432,7 +432,7 @@ def run_pbs_jobs(
     prev_jobids: List[str] = []
     for index, job in enumerate(jobs):
         # Generate pbs file
-        content = create_pbs_file(job)
+        content = create_scheduler_file("pbs", job)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
         with fname.open("w") as dst:
@@ -505,7 +505,7 @@ def run_slurm_jobs(
     prev_jobids: List[str] = []
     for index, job in enumerate(jobs):
         # Generate pbs file
-        content = create_pbs_file(job)
+        content = create_scheduler_file("slurm", job)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.slurm".format(basename, index))
         with fname.open("w") as dst:
@@ -548,8 +548,9 @@ def process_scheduler(structure: Dict[str, Any]) -> str:
     presence of keys in the input file corresponding to the different schedulers. The
     schedulers that are supported are
 
-    - shell, and
-    - pbs
+    - shell
+    - pbs, and
+    - slurm
 
     listed in the order of precedence. The first scheduler with a truthy value in the
     input file is the value returned by this function. Where no truthy values are found

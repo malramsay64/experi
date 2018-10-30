@@ -237,7 +237,22 @@ def create_header_string(scheduler: str, **kwargs) -> str:
     raise ValueError("Scheduler needs to be one of PBS or SLURM.")
 
 
-def create_scheduler_file(job: Job) -> str:
+def get_array_string(scheduler: str, num_commands: int) -> str:
+    header_string = ""
+    if scheduler.upper() == "SLURM":
+        if num_commands > 1:
+            header_string += "#SBATCH -J 0-{}\n".format(num_commands - 1)
+        else:
+            header_string += "SLURM_ARRAY_TASK_ID=0\n"
+    elif scheduler.upper == "PBS":
+        if num_commands > 1:
+            header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
+        else:
+            header_string += "PBS_ARRAY_INDEX=0\n"
+    return header_string
+
+
+def create_scheduler_file(scheduler: str, job: Job) -> str:
     """Substitute values into a template scheduler file."""
 
     if job.scheduler_options is None:
@@ -250,51 +265,19 @@ def create_scheduler_file(job: Job) -> str:
     except KeyError:
         setup_string = ""
     # Create header
-    header_string = create_header_string(scheduler_options)
+    header_string = create_header_string(scheduler, **scheduler_options)
+    header_string += get_array_string(scheduler, len(job))
 
-    num_commands = len(job)
-    logger.debug("Number of commands: %d", num_commands)
-    if num_commands > 1:
-        header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
-    else:
-        header_string += "PBS_ARRAY_INDEX=0\n"
+    if scheduler.upper() == "SLURM":
+        workdir = r"$SLURM_SUBMIT_DIR"
+        array_index = r"$SLURM_ARRAY_TASK_ID"
+    elif scheduler.upper() == "PBS":
+        workdir = r"$PBS_O_WORKDIR"
+        array_index = r"$PBS_ARRAY_INDEX"
+
     return header_string + SCHEDULER_TEMPLATE.format(
-        workdir=r"$PBS_O_WORKDIR",
+        workdir=workdir,
         command_list=job.as_bash_array(),
         setup=setup_string,
-        array_index=r"$PBS_ARRAY_INDEX",
-    )
-
-
-def create_slurm_file(job: Job) -> str:
-    """Substitute values into a template pbs file.
-
-    This substitues the values in the pbs section of the input file
-    into a simple template pbs file. Values not specified will use
-    default options.
-
-    """
-    if job.scheduler_options is None:
-        scheduler_options: Dict[str, Any] = {}
-    else:
-        scheduler_options = deepcopy(job.scheduler_options)
-    try:
-        setup_string = scheduler_options["setup"]
-        del scheduler_options["setup"]
-    except KeyError:
-        setup_string = ""
-    # Create header
-    header_string = slurm_header(**scheduler_options)
-
-    num_commands = len(job)
-    logger.debug("Number of commands: %d", num_commands)
-    if num_commands > 1:
-        header_string += "#SBATCH -J 0-{}\n".format(num_commands - 1)
-    else:
-        header_string += "SLURM_ARRAY_TASK_ID=0\n"
-    return header_string + SCHEDULER_TEMPLATE.format(
-        workdir=r"$SLURM_SUBMIT_DIR",
-        array_index=r"$SLURM_ARRAY_TASK_ID",
-        command_list=job.as_bash_array(),
-        setup=setup_string,
+        array_index=array_index,
     )
