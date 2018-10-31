@@ -20,16 +20,211 @@ from typing import Any, Dict, List, Union
 from .commands import Job
 
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
 
 
-PBS_TEMPLATE = """
-cd "$PBS_O_WORKDIR"
+SCHEDULER_TEMPLATE = """
+cd "{workdir}"
 {setup}
 
 COMMAND={command_list}
 
-${{COMMAND[$PBS_ARRAY_INDEX]}}
+${{COMMAND[{array_index}]}}
 """
+
+
+class SchedulerOptions:
+    prefix: str = "#SHELL"
+    name: str = "Experi_Job"
+    resources: OrderedDict
+    time: OrderedDict
+    project: str = ""
+    log_dir: str = ""
+    email: str = ""
+    leftovers: OrderedDict
+
+    def __init__(self, **kwargs) -> None:
+        # Initialise data structures with default values
+        self.resources = OrderedDict(select=1, ncpus=1)
+        self.time = OrderedDict(walltime="1:00")
+        self.leftovers = OrderedDict()
+
+        for key, value in kwargs.items():
+            if key in ["name", "N"]:
+                self.name = value
+
+            elif key in ["select", "nodes"]:
+                self.resources["select"] = value
+            elif key in ["ncpus", "cpus"]:
+                self.resources["ncpus"] = value
+            elif key in ["mem", "memory"]:
+                self.resources["mem"] = value
+            elif key in ["gpus", "ngpus"]:
+                self.resources["ngpus"] = value
+
+            elif key in ["walltime", "cputime"]:
+                self.time[key] = value
+
+            elif key in ["project", "account"]:
+                self.project = value
+            elif key in ["log", "logs", "output", "o"]:
+                self.log_dir = value
+            elif key in ["email", "mail"]:
+                if isinstance(value, list):
+                    self.email = ",".join(value)
+                else:
+                    self.email = value
+            else:
+                self.leftovers[key] = value
+
+    def get_resources(self) -> str:
+        resource_str = ":".join(
+            ["{}={}".format(key, val) for key, val in self.resources.items()]
+        )
+        return "{} Resources: {}\n".format(self.prefix, resource_str)
+
+    def get_times(self) -> str:
+        time_str = ":".join(
+            ["{}={}".format(key, val) for key, val in self.time.items()]
+        )
+        return "{} Time Resources: {}\n".format(self.prefix, time_str)
+
+    def get_project(self) -> str:
+        return "{} Project: {}\n".format(self.prefix, self.project)
+
+    def get_logging(self) -> str:
+        return "{} Log: {}\n".format(self.prefix, self.log_dir)
+
+    def get_arbitrary_keys(self) -> str:
+        output = ""
+        for key, val in self.leftovers.items():
+            output += "{} {}: {}\n".format(self.prefix, key, val)
+
+        return output
+
+    def get_name(self) -> str:
+        return "{} Name: {}\n".format(self.prefix, self.name)
+
+    def get_mail(self) -> str:
+        if self.email:
+            return "{} Email: {}".format(self.prefix, self.email)
+        return ""
+
+    def create_header(self) -> str:
+        header_string = "#!/bin/bash\n"
+
+        header_string += self.get_name()
+        header_string += self.get_resources()
+        header_string += self.get_times()
+        header_string += self.get_logging()
+        header_string += self.get_mail()
+        header_string += self.get_arbitrary_keys()
+        return header_string
+
+
+class PBSOptions(SchedulerOptions):
+    prefix = "#PBS"
+
+    def get_resources(self) -> str:
+        resource_str = ":".join(
+            ["{}={}".format(key, val) for key, val in self.resources.items()]
+        )
+        return "{} -l {}\n".format(self.prefix, resource_str)
+
+    def get_times(self) -> str:
+        time_str = ":".join(
+            ["{}={}".format(key, val) for key, val in self.time.items()]
+        )
+        return "{} -l {}\n".format(self.prefix, time_str)
+
+    def get_project(self) -> str:
+        if self.project:
+            return "{} -P {}\n".format(self.prefix, self.project)
+        return ""
+
+    def get_logging(self) -> str:
+        if self.log_dir:
+            log_str = "{} -o {}\n".format(self.prefix, self.log_dir)
+            # Join the output and the error to the one file
+            # This is what I would consider a sensible default value since it is the
+            # same as what you would see in the terminal and is the default behaviour in
+            # slurm
+            log_str += "{} -j oe\n".format(self.prefix)
+            return log_str
+
+        return ""
+
+    def get_arbitrary_keys(self) -> str:
+        output = ""
+        for key, val in self.leftovers.items():
+            if len(key) > 1:
+                output += "{} --{} {}\n".format(self.prefix, key, val)
+            else:
+                output += "{} -{} {}\n".format(self.prefix, key, val)
+
+        return output
+
+    def get_name(self) -> str:
+        return "{} -N {}\n".format(self.prefix, self.name)
+
+    def get_mail(self) -> str:
+        if self.email:
+            email_str = "{} -M {}".format(self.prefix, self.email)
+            # Email when the job is finished
+            # This is a sensible default value, providing a notification in the form of
+            # an email when a job is complete and further investigation is required.
+            email_str += "{} -m ae".format(self.prefix)
+            return email_str
+        return ""
+
+
+class SLURMOptions(SchedulerOptions):
+    prefix = "#SBATCH"
+
+    def get_resources(self) -> str:
+        resource_str = "{} --cpus-per-task {}\n".format(
+            self.prefix, self.resources.get("ncpus")
+        )
+        if self.resources.get("mem"):
+            resource_str += "{} --mem-per-task {}\n".format(
+                self.prefix, self.resources["mem"]
+            )
+        if self.resources.get("ngpus"):
+            resource_str += "{} --gres=gpu:{}\n".format(
+                self.prefix, self.resources["ngpus"]
+            )
+
+        return resource_str
+
+    def get_times(self) -> str:
+        return "{} --time {}\n".format(self.prefix, self.time.get("walltime"))
+
+    def get_project(self) -> str:
+        if self.project:
+            return "{} --account {}\n".format(self.prefix, self.project)
+        return ""
+
+    def get_logging(self) -> str:
+        if self.log_dir:
+            log_str = "{} --output {}/slurm-%A_%a.out\n".format(
+                self.prefix, self.log_dir
+            )
+            return log_str
+
+        return ""
+
+    def get_arbitrary_keys(self) -> str:
+        output = ""
+        for key, val in self.leftovers.items():
+            if len(key) > 1:
+                output += "{} --{} {}\n".format(self.prefix, key, val)
+            else:
+                output += "{} -{} {}\n".format(self.prefix, key, val)
+
+        return output
+
+    def get_name(self) -> str:
+        return "{} --name {}\n".format(self.prefix, self.name)
 
 
 def parse_setup(options: Union[List, str]) -> str:
@@ -44,114 +239,58 @@ def parse_setup(options: Union[List, str]) -> str:
     return "\n".join(options)
 
 
-def pbs_header(**kwargs):
-    """Parse arbitrary pbs options into a header."""
-    header_string = "#!/bin/bash\n"
+def create_header_string(scheduler: str, **kwargs) -> str:
+    assert isinstance(scheduler, str)
+    if scheduler.upper() == "PBS":
+        return PBSOptions(**kwargs).create_header()
+    if scheduler.upper() == "SLURM":
+        return SLURMOptions(**kwargs).create_header()
+    raise ValueError("Scheduler needs to be one of PBS or SLURM.")
 
-    # Parse name
-    if kwargs.get("N"):
-        header_string += "#PBS -N {}\n".format(kwargs.get("N").replace(" ", "_"))
-        del kwargs["N"]
-    elif kwargs.get("name"):
-        header_string += "#PBS -N {}\n".format(kwargs.get("name").replace(" ", "_"))
-        del kwargs["name"]
+
+def get_array_string(scheduler: str, num_commands: int) -> str:
+    if scheduler.upper() == "SLURM":
+        if num_commands > 1:
+            header_string = "#SBATCH -J 0-{}\n".format(num_commands - 1)
+        else:
+            header_string = "SLURM_ARRAY_TASK_ID=0\n"
+    elif scheduler.upper() == "PBS":
+        if num_commands > 1:
+            header_string = "#PBS -J 0-{}\n".format(num_commands - 1)
+        else:
+            header_string = "PBS_ARRAY_INDEX=0\n"
     else:
-        header_string += "#PBS -N {}\n".format("experi")
-
-    # Parse resources
-    resources = OrderedDict()
-    # set default values
-    resources["select"] = 1
-    resources["ncpus"] = 1
-    # nodes
-    if kwargs.get("select"):
-        resources["select"] = kwargs.get("select")
-        del kwargs["select"]
-    elif kwargs.get("nodes"):
-        resources["select"] = kwargs.get("nodes")
-        del kwargs["nodes"]
-    # cpus/node
-    if kwargs.get("ncpus"):
-        resources["ncpus"] = kwargs.get("ncpus")
-        del kwargs["ncpus"]
-    elif kwargs.get("cpus"):
-        resources["ncpus"] = kwargs.get("cpus")
-        del kwargs["cpus"]
-    # memory
-    if kwargs.get("mem"):
-        resources["mem"] = kwargs.get("mem")
-        del kwargs["mem"]
-    elif kwargs.get("memory"):
-        resources["mem"] = kwargs.get("memory")
-        del kwargs["memory"]
-    # gpus
-    if kwargs.get("ngpus"):
-        resources["ngpus"] = kwargs.get("ngpus")
-        del kwargs["ngpus"]
-    elif kwargs.get("ngpus"):
-        resources["ngpus"] = kwargs.get("gpus")
-        del kwargs["gpus"]
-    # assemble string
-    header_string += "#PBS -l {}\n".format(
-        ":".join(["{}={}".format(key, val) for key, val in resources.items()])
-    )
-
-    # Parse times
-    times = {"walltime": "1:00"}
-    if kwargs.get("walltime"):
-        times["walltime"] = kwargs.get("walltime")
-        del kwargs["walltime"]
-
-    if kwargs.get("cputime"):
-        times["cputime"] = kwargs.get("cputime")
-        del kwargs["cputime"]
-
-    header_string += "#PBS -l {}\n".format(
-        ":".join(["{}={}".format(key, val) for key, val in times.items()])
-    )
-
-    # Parse project
-    if kwargs.get("P"):
-        header_string += "#PBS -P {}\n".format(kwargs.get("P"))
-        del kwargs["P"]
-    elif kwargs.get("project"):
-        header_string += "#PBS -P {}\n".format(kwargs.get("project"))
-        del kwargs["project"]
-
-    # Parse arbitrary options
-    for key, val in kwargs.items():
-        logger.warning("Arbitrary key passed: -%s %s", key, val)
-        header_string += "#PBS -{} {}\n".format(key, val)
-
+        raise ValueError("scheduler not recognised, must be one of [pbs|slurm]")
     return header_string
 
 
-def create_pbs_file(job: Job) -> str:
-    """Substitute values into a template pbs file.
+def create_scheduler_file(scheduler: str, job: Job) -> str:
+    """Substitute values into a template scheduler file."""
+    logger.debug("Create Scheduler File Function")
 
-    This substitutes the values in the pbs section of the input file
-    into a simple template pbs file. Values not specified will use
-    default options.
-
-    """
     if job.scheduler_options is None:
-        pbs_options: Dict[str, Any] = {}
+        scheduler_options: Dict[str, Any] = {}
     else:
-        pbs_options = deepcopy(job.scheduler_options)
+        scheduler_options = deepcopy(job.scheduler_options)
     try:
-        setup_string = parse_setup(pbs_options["setup"])
-        del pbs_options["setup"]
+        setup_string = parse_setup(scheduler_options["setup"])
+        del scheduler_options["setup"]
     except KeyError:
         setup_string = ""
     # Create header
-    header_string = pbs_header(**pbs_options)
+    header_string = create_header_string(scheduler, **scheduler_options)
+    header_string += get_array_string(scheduler, len(job))
 
-    num_commands = len(job)
-    logger.debug("Number of commands: %d", num_commands)
-    if num_commands > 1:
-        header_string += "#PBS -J 0-{}\n".format(num_commands - 1)
-    else:
-        header_string += "PBS_ARRAY_INDEX=0\n"
-    return header_string + PBS_TEMPLATE.format(
-        command_list=job.as_bash_array(), setup=setup_string
+    if scheduler.upper() == "SLURM":
+        workdir = r"$SLURM_SUBMIT_DIR"
+        array_index = r"$SLURM_ARRAY_TASK_ID"
+    elif scheduler.upper() == "PBS":
+        workdir = r"$PBS_O_WORKDIR"
+        array_index = r"$PBS_ARRAY_INDEX"
+
+    return header_string + SCHEDULER_TEMPLATE.format(
+        workdir=workdir,
+        command_list=job.as_bash_array(),
+        setup=setup_string,
+        array_index=array_index,
     )

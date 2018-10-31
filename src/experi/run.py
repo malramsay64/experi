@@ -23,7 +23,7 @@ import numpy as np
 import yaml
 
 from .commands import Command, Job
-from .pbs import create_pbs_file
+from .pbs import create_scheduler_file
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
@@ -345,9 +345,11 @@ def run_jobs(
         run_bash_jobs(jobs, directory, dry_run=dry_run)
     elif scheduler == "pbs":
         run_pbs_jobs(jobs, directory, dry_run=dry_run)
+    elif scheduler == "slurm":
+        run_slurm_jobs(jobs, directory, dry_run=dry_run)
     else:
         raise ValueError(
-            f"Scheduler '{scheduler}'was not recognised. Possible values are ['shell', 'pbs']"
+            f"Scheduler '{scheduler}'was not recognised. Possible values are ['shell', 'pbs', 'slurm']"
         )
 
 
@@ -430,7 +432,8 @@ def run_pbs_jobs(
     prev_jobids: List[str] = []
     for index, job in enumerate(jobs):
         # Generate pbs file
-        content = create_pbs_file(job)
+        content = create_scheduler_file("pbs", job)
+        logger.debug("File contents:\n%s", content)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
         with fname.open("w") as dst:
@@ -461,6 +464,84 @@ def run_pbs_jobs(
                 break
 
 
+def run_slurm_jobs(
+    jobs: Iterator[Job],
+    directory: PathLike = Path.cwd(),
+    basename: str = "experi",
+    dry_run: bool = False,
+) -> None:
+    """Submit a series of commands to the slurm batch scheduler.
+
+    This takes a list of strings which are the contents of the pbs files, writes the files to disk
+    and submits the job to the scheduler. Files which match the pattern of the resulting files
+    <basename>_<index>.pbs are deleted before writing the new files.
+
+    To ensure that commands run consecutively the aditional requirement to the run script `-W
+    depend=afterok:<prev_jobid>` is added. This allows for all the components of the experiment to
+    be conducted in a single script.
+
+    Note: Running this function requires that the command `qsub` exists, implying that a job
+    scheduler is installed.
+
+    """
+    submit_job = True
+    logger.debug("Creating commands in slurm files.")
+    # Check qsub exists
+    if shutil.which("sbatch") is None:
+        logger.warning(
+            "The `sbatch` command is not found."
+            "Skipping job submission and just generating files"
+        )
+        submit_job = False
+
+    # Ensure directory is a Path
+    directory = Path(directory)
+
+    # remove existing files
+    for fname in directory.glob(basename + "*.slurm"):
+        print("Removing {}".format(fname))
+        os.remove(str(fname))
+
+    # Write new files and generate commands
+    prev_jobids: List[str] = []
+    for index, job in enumerate(jobs):
+        # Generate pbs file
+        content = create_scheduler_file("slurm", job)
+        # Write file to disk
+        fname = Path(directory / "{}_{:02d}.slurm".format(basename, index))
+        with fname.open("w") as dst:
+            dst.write(content)
+
+        if submit_job:
+            # Construct command
+            submit_cmd = ["sbatch"]
+
+            if prev_jobids:
+                # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
+                # with the first.
+                submit_cmd += [
+                    "--dependency",
+                    "afterok:{} ".format(":".join(prev_jobids)),
+                ]
+
+            # acutally run the command
+            logger.info(str(submit_cmd))
+            try:
+                if dry_run:
+                    print(f"{submit_cmd} {fname.name}")
+                    prev_jobids.append("dry_run")
+                else:
+                    cmd_res = subprocess.check_output(
+                        submit_cmd + [fname.name], cwd=str(directory)
+                    )
+                    prev_jobids.append(cmd_res.decode().strip())
+            except subprocess.CalledProcessError:
+                logger.error("Submitting job to the queue failed.")
+                break
+
+            prev_jobids.append(cmd_res.decode().strip())
+
+
 def process_scheduler(structure: Dict[str, Any]) -> str:
     """Get the scheduler to run the jobs.
 
@@ -468,8 +549,9 @@ def process_scheduler(structure: Dict[str, Any]) -> str:
     presence of keys in the input file corresponding to the different schedulers. The
     schedulers that are supported are
 
-    - shell, and
-    - pbs
+    - shell
+    - pbs, and
+    - slurm
 
     listed in the order of precedence. The first scheduler with a truthy value in the
     input file is the value returned by this function. Where no truthy values are found
@@ -480,6 +562,8 @@ def process_scheduler(structure: Dict[str, Any]) -> str:
         return "shell"
     if structure.get("pbs"):
         return "pbs"
+    if structure.get("slurm"):
+        return "slurm"
     return "shell"
 
 
