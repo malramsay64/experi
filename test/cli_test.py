@@ -15,7 +15,7 @@ import pytest
 from click.testing import CliRunner
 
 from experi.run import main
-from experi.version import __version__
+import pkg_resources
 
 
 @pytest.fixture
@@ -25,7 +25,8 @@ def runner():
 
 def test_version(runner):
     result = runner.invoke(main, ["--version"])
-    assert __version__ in result.output
+    version = pkg_resources.get_distribution('experi').version
+    assert version in result.output
 
 
 def test_missing_input_file(runner):
