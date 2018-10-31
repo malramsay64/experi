@@ -4,7 +4,7 @@ python:
 
 install:
   - pip install codecov
-  - pipenv install --dev --ignore-pipfile
+  - pip install -e ".[dev]"
 
 script:
   - mypy src
