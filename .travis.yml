@@ -2,17 +2,13 @@ language: python
 python:
   - "3.6"
 
-env:
-  - PIPENV_IGNORE_VIRTUALENVS=1
-
 install:
-  - pip install pipenv
   - pip install codecov
   - pipenv install --dev --ignore-pipfile
 
 script:
-  - pipenv run mypy src
-  - pipenv run pytest
+  - mypy src
+  - pytest
 
 after_success:
   - codecov
