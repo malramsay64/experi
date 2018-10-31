@@ -182,22 +182,22 @@ class SLURMOptions(SchedulerOptions):
     prefix = "#SBATCH"
 
     def get_resources(self) -> str:
-        resource_str = "{} --cpus-per-task {}".format(
+        resource_str = "{} --cpus-per-task {}\n".format(
             self.prefix, self.resources.get("ncpus")
         )
         if self.resources.get("mem"):
-            resource_str += "{} --mem-per-task {}".format(
+            resource_str += "{} --mem-per-task {}\n".format(
                 self.prefix, self.resources["mem"]
             )
         if self.resources.get("ngpus"):
-            resource_str += "{} --gres=gpu:{}".format(
+            resource_str += "{} --gres=gpu:{}\n".format(
                 self.prefix, self.resources["ngpus"]
             )
 
         return resource_str
 
     def get_times(self) -> str:
-        return "{} --time {}".format(self.prefix, self.time.get("walltime"))
+        return "{} --time {}\n".format(self.prefix, self.time.get("walltime"))
 
     def get_project(self) -> str:
         if self.project:
