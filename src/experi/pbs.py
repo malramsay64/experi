@@ -107,7 +107,7 @@ class SchedulerOptions:
 
     def get_mail(self) -> str:
         if self.email:
-            return "{} Email: {}".format(self.prefix, self.email)
+            return "{} Email: {}\n".format(self.prefix, self.email)
         return ""
 
     def create_header(self) -> str:
@@ -169,11 +169,11 @@ class PBSOptions(SchedulerOptions):
 
     def get_mail(self) -> str:
         if self.email:
-            email_str = "{} -M {}".format(self.prefix, self.email)
+            email_str = "{} -M {}\n".format(self.prefix, self.email)
             # Email when the job is finished
             # This is a sensible default value, providing a notification in the form of
             # an email when a job is complete and further investigation is required.
-            email_str += "{} -m ae".format(self.prefix)
+            email_str += "{} -m ae\n".format(self.prefix)
             return email_str
         return ""
 
