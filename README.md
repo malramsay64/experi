@@ -59,10 +59,33 @@ simple as running `experi`.
 For more information I have written a [blog post][experi blog post] which goes
 into more depth on how this tool has helped my workflow.
 
+Project Goals
+-------------
+
+The primary goals of this project detailed below. They act as the guiding
+principles for the design decisions which are made.
+
+- Human centric
+  - Interactions should be simple, intuitive, and frictionless
+  - Shouldn't need to constantly consult documentation to use
+  - Minimal expertise required to understand
+
+- Sensible Defaults
+  - Testing a job on a scheduler should be simple, requiring a minimal specification
+
+- Fast Errors
+  - Errors in the code should be picked up as soon as possible, i.e. shouldn't arise
+    after waiting in the job queue.
+  - Allow for testing locally using the shell, before running on HPC
+
+Where current functionality doesn't meet these goals please raise an issue, I am
+more than happy to discuss. Although do note that these goals are somewhat
+opinionated.
+
 What about ...?
 ---------------------
 
- - [Sumatra] is a tool for managing and tracking projects,
+- [Sumatra] is a tool for managing and tracking projects,
     with a focus on running a single experiment at a time and the
     reproducibility of the results. Experi is more about running many
     simulations with a range of parameters, the reproducibility aspect is
