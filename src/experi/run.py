@@ -574,6 +574,20 @@ def _set_verbosity(ctx, param, value):
         logging.basicConfig(level=logging.DEBUG)
 
 
+def launch(input_file="experiment.yml", use_dependencies=False, dry_run=False) -> None:
+    # This function provides an API to access experi's functionality from within
+    # python scripts, as an alternative to the command-line interface
+
+    # Process and run commands
+    input_file = Path(input_file)
+    structure = read_file(input_file)
+    scheduler = process_scheduler(structure)
+    jobs = process_structure(
+        structure, scheduler, Path(input_file.parent), use_dependencies
+    )
+    run_jobs(jobs, scheduler, input_file.parent, dry_run)
+
+
 @click.command()
 @click.version_option()
 @click.option(
@@ -606,11 +620,4 @@ def _set_verbosity(ctx, param, value):
     help="Increase the verbosity of logging events.",
 )
 def main(input_file, use_dependencies, dry_run) -> None:
-    # Process and run commands
-    input_file = Path(input_file)
-    structure = read_file(input_file)
-    scheduler = process_scheduler(structure)
-    jobs = process_structure(
-        structure, scheduler, Path(input_file.parent), use_dependencies
-    )
-    run_jobs(jobs, scheduler, input_file.parent, dry_run)
+    launch(input_file, use_dependencies, dry_run)
