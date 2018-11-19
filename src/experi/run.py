@@ -539,8 +539,6 @@ def run_slurm_jobs(
                 logger.error("Submitting job to the queue failed.")
                 break
 
-            prev_jobids.append(cmd_res.decode().strip())
-
 
 def process_scheduler(structure: Dict[str, Any]) -> str:
     """Get the scheduler to run the jobs.
