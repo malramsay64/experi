@@ -49,7 +49,7 @@ class SchedulerOptions:
         self.leftovers = OrderedDict()
 
         for key, value in kwargs.items():
-            if key in ["name", "N"]:
+            if key in ["name"]:
                 self.name = value
 
             elif key in ["select", "nodes"]:
@@ -66,7 +66,7 @@ class SchedulerOptions:
 
             elif key in ["project", "account"]:
                 self.project = value
-            elif key in ["log", "logs", "output", "o"]:
+            elif key in ["log", "logs", "output"]:
                 self.log_dir = value
             elif key in ["email", "mail"]:
                 if isinstance(value, list):
