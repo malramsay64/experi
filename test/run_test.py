@@ -19,7 +19,6 @@ from experi.run import process_scheduler, run_bash_jobs, run_pbs_jobs
 
 @pytest.fixture
 def create_jobs():
-
     def _create_jobs(command: str) -> Iterator[Job]:
         yield Job([Command(command)])
 

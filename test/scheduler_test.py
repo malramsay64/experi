@@ -6,13 +6,13 @@
 #
 # Distributed under terms of the MIT license.
 
-"""Test the building of pbs files."""
+"""Test the building of scheduler files."""
 
 import pytest
 
 from experi.commands import Command, Job
-from experi.pbs import create_scheduler_file
 from experi.run import process_structure, read_file, run_jobs
+from experi.scheduler import create_scheduler_file
 
 DEFAULT_PBS = """#!/bin/bash
 #PBS -N Experi_Job

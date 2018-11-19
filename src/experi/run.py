@@ -23,7 +23,7 @@ import numpy as np
 import yaml
 
 from .commands import Command, Job
-from .pbs import create_scheduler_file
+from .scheduler import create_scheduler_file
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
@@ -312,14 +312,14 @@ def process_structure(
 
     scheduler_options = None
 
-    # Check for pbs options
+    # Check for scheduler options
     if structure.get(scheduler):
         scheduler_options = structure.get(scheduler)
         if scheduler_options is True:
             scheduler_options = {}
         assert isinstance(scheduler_options, dict)
         if structure.get("name"):
-            # set the name attribute in pbs to global name if no name defined in pbs
+            # set the name attribute in scheduler to global name if no name defined
             scheduler_options.setdefault("name", structure.get("name"))
 
     jobs_dict = structure.get("jobs")

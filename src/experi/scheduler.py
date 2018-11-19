@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 
-"""Generate pbs files for submission on batch systems.
+"""Generate scheduler files for submission on batch systems.
 
 This will generate a .pbs file with all the information required to run a single command
 from the list of commands. The variables will be generated and iterated over using the
