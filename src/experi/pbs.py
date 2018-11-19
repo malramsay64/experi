@@ -13,6 +13,7 @@ from the list of commands. The variables will be generated and iterated over usi
 job array feature of pbs. """
 
 import logging
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Any, Dict, List, Union
@@ -33,7 +34,7 @@ bash -c ${{COMMAND[{array_index}]}}
 """
 
 
-class SchedulerOptions:
+class SchedulerOptions(ABC):
     name: str = "Experi_Job"
     resources: OrderedDict
     time: OrderedDict
@@ -76,6 +77,43 @@ class SchedulerOptions:
             else:
                 self.leftovers[key] = value
 
+    def create_header(self) -> str:
+        header_string = "#!/bin/bash\n"
+
+        header_string += self.get_name()
+        header_string += self.get_resources()
+        header_string += self.get_times()
+        header_string += self.get_logging()
+        header_string += self.get_mail()
+        header_string += self.get_arbitrary_keys()
+        return header_string
+
+    @abstractmethod
+    def get_name(self):
+        pass
+
+    @abstractmethod
+    def get_resources(self):
+        pass
+
+    @abstractmethod
+    def get_times(self):
+        pass
+
+    @abstractmethod
+    def get_logging(self):
+        pass
+
+    @abstractmethod
+    def get_mail(self):
+        pass
+
+    @abstractmethod
+    def get_arbitrary_keys(self):
+        pass
+
+
+class ShellOptions(SchedulerOptions):
     def get_resources(self) -> str:
         resource_str = ":".join(
             ["{}={}".format(key, val) for key, val in self.resources.items()]
@@ -214,6 +252,16 @@ class SLURMOptions(SchedulerOptions):
 
     def get_name(self) -> str:
         return "#SBATCH --name {}\n".format(self.name)
+
+    def get_mail(self) -> str:
+        if self.email:
+            email_str = "#SBATCH --mail-user {}\n".format(self.email)
+            # Email when the job is finished
+            # This is a sensible default value, providing a notification in the form of
+            # an email when a job is complete and further investigation is required.
+            email_str += "#SBATCH --mail-type END,FAIL\n"
+            return email_str
+        return ""
 
 
 def parse_setup(options: Union[List, str]) -> str:
