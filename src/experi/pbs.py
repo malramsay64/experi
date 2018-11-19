@@ -29,12 +29,11 @@ cd "{workdir}"
 
 COMMAND={command_list}
 
-${{COMMAND[{array_index}]}}
+bash -c ${{COMMAND[{array_index}]}}
 """
 
 
 class SchedulerOptions:
-    prefix: str = "#SHELL"
     name: str = "Experi_Job"
     resources: OrderedDict
     time: OrderedDict
@@ -81,33 +80,33 @@ class SchedulerOptions:
         resource_str = ":".join(
             ["{}={}".format(key, val) for key, val in self.resources.items()]
         )
-        return "{} Resources: {}\n".format(self.prefix, resource_str)
+        return "#SHELL Resources: {}\n".format(resource_str)
 
     def get_times(self) -> str:
         time_str = ":".join(
             ["{}={}".format(key, val) for key, val in self.time.items()]
         )
-        return "{} Time Resources: {}\n".format(self.prefix, time_str)
+        return "#SHELL Time Resources: {}\n".format(time_str)
 
     def get_project(self) -> str:
-        return "{} Project: {}\n".format(self.prefix, self.project)
+        return "#SHELL Project: {}\n".format(self.project)
 
     def get_logging(self) -> str:
-        return "{} Log: {}\n".format(self.prefix, self.log_dir)
+        return "#SHELL Log: {}\n".format(self.log_dir)
 
     def get_arbitrary_keys(self) -> str:
         output = ""
         for key, val in self.leftovers.items():
-            output += "{} {}: {}\n".format(self.prefix, key, val)
+            output += "#SHELL {}: {}\n".format(key, val)
 
         return output
 
     def get_name(self) -> str:
-        return "{} Name: {}\n".format(self.prefix, self.name)
+        return "#SHELL Name: {}\n".format(self.name)
 
     def get_mail(self) -> str:
         if self.email:
-            return "{} Email: {}\n".format(self.prefix, self.email)
+            return "#SHELL Email: {}\n".format(self.email)
         return ""
 
     def create_header(self) -> str:
@@ -123,33 +122,31 @@ class SchedulerOptions:
 
 
 class PBSOptions(SchedulerOptions):
-    prefix = "#PBS"
-
     def get_resources(self) -> str:
         resource_str = ":".join(
             ["{}={}".format(key, val) for key, val in self.resources.items()]
         )
-        return "{} -l {}\n".format(self.prefix, resource_str)
+        return "#PBS -l {}\n".format(resource_str)
 
     def get_times(self) -> str:
         time_str = ":".join(
             ["{}={}".format(key, val) for key, val in self.time.items()]
         )
-        return "{} -l {}\n".format(self.prefix, time_str)
+        return "#PBS -l {}\n".format(time_str)
 
     def get_project(self) -> str:
         if self.project:
-            return "{} -P {}\n".format(self.prefix, self.project)
+            return "#PBS -P {}\n".format(self.project)
         return ""
 
     def get_logging(self) -> str:
         if self.log_dir:
-            log_str = "{} -o {}\n".format(self.prefix, self.log_dir)
+            log_str = "#PBS -o {}\n".format(self.log_dir)
             # Join the output and the error to the one file
             # This is what I would consider a sensible default value since it is the
             # same as what you would see in the terminal and is the default behaviour in
             # slurm
-            log_str += "{} -j oe\n".format(self.prefix)
+            log_str += "#PBS -j oe\n"
             return log_str
 
         return ""
@@ -158,57 +155,49 @@ class PBSOptions(SchedulerOptions):
         output = ""
         for key, val in self.leftovers.items():
             if len(key) > 1:
-                output += "{} --{} {}\n".format(self.prefix, key, val)
+                output += "#PBS --{} {}\n".format(key, val)
             else:
-                output += "{} -{} {}\n".format(self.prefix, key, val)
+                output += "#PBS -{} {}\n".format(key, val)
 
         return output
 
     def get_name(self) -> str:
-        return "{} -N {}\n".format(self.prefix, self.name)
+        return "#PBS -N {}\n".format(self.name)
 
     def get_mail(self) -> str:
         if self.email:
-            email_str = "{} -M {}\n".format(self.prefix, self.email)
+            email_str = "#PBS -M {}\n".format(self.email)
             # Email when the job is finished
             # This is a sensible default value, providing a notification in the form of
             # an email when a job is complete and further investigation is required.
-            email_str += "{} -m ae\n".format(self.prefix)
+            email_str += "#PBS -m ae\n"
             return email_str
         return ""
 
 
 class SLURMOptions(SchedulerOptions):
-    prefix = "#SBATCH"
-
     def get_resources(self) -> str:
-        resource_str = "{} --cpus-per-task {}\n".format(
-            self.prefix, self.resources.get("ncpus")
+        resource_str = "#SBATCH --cpus-per-task {}\n".format(
+            self.resources.get("ncpus")
         )
         if self.resources.get("mem"):
-            resource_str += "{} --mem-per-task {}\n".format(
-                self.prefix, self.resources["mem"]
-            )
+            resource_str += "#SBATCH --mem-per-task {}\n".format(self.resources["mem"])
         if self.resources.get("ngpus"):
-            resource_str += "{} --gres=gpu:{}\n".format(
-                self.prefix, self.resources["ngpus"]
-            )
+            resource_str += "#SBATCH --gres=gpu:{}\n".format(self.resources["ngpus"])
 
         return resource_str
 
     def get_times(self) -> str:
-        return "{} --time {}\n".format(self.prefix, self.time.get("walltime"))
+        return "#SBATCH --time {}\n".format(self.time.get("walltime"))
 
     def get_project(self) -> str:
         if self.project:
-            return "{} --account {}\n".format(self.prefix, self.project)
+            return "#SBATCH --account {}\n".format(self.project)
         return ""
 
     def get_logging(self) -> str:
         if self.log_dir:
-            log_str = "{} --output {}/slurm-%A_%a.out\n".format(
-                self.prefix, self.log_dir
-            )
+            log_str = "#SBATCH --output {}/slurm-%A_%a.out\n".format(self.log_dir)
             return log_str
 
         return ""
@@ -217,14 +206,14 @@ class SLURMOptions(SchedulerOptions):
         output = ""
         for key, val in self.leftovers.items():
             if len(key) > 1:
-                output += "{} --{} {}\n".format(self.prefix, key, val)
+                output += "#SBATCH --{} {}\n".format(key, val)
             else:
-                output += "{} -{} {}\n".format(self.prefix, key, val)
+                output += "#SBATCH -{} {}\n".format(key, val)
 
         return output
 
     def get_name(self) -> str:
-        return "{} --name {}\n".format(self.prefix, self.name)
+        return "#SBATCH --name {}\n".format(self.name)
 
 
 def parse_setup(options: Union[List, str]) -> str:
