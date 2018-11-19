@@ -27,7 +27,7 @@ COMMAND=( \\
 "echo 1" \\
 )
 
-${COMMAND[$PBS_ARRAY_INDEX]}
+bash -c ${COMMAND[$PBS_ARRAY_INDEX]}
 """
 
 DEFAULT_SLURM = """#!/bin/bash
@@ -43,8 +43,9 @@ COMMAND=( \\
 "echo 1" \\
 )
 
-${COMMAND[$SLURM_ARRAY_TASK_ID]}
+bash -c ${COMMAND[$SLURM_ARRAY_TASK_ID]}
 """
+
 
 @pytest.mark.parametrize(
     "job, result",
@@ -55,14 +56,17 @@ ${COMMAND[$SLURM_ARRAY_TASK_ID]}
             '( \\\n"echo 1" \\\n"echo 2" \\\n)',
         ),
     ],
-    ids = ["single", "list"]
+    ids=["single", "list"],
 )
 def test_jobs_as_bash_array(job, result):
     assert job.as_bash_array() == result
 
 
-
-@pytest.mark.parametrize('scheduler, expected', [('pbs', DEFAULT_PBS), ('slurm', DEFAULT_SLURM)], ids=["PBS", "SLURM"])
+@pytest.mark.parametrize(
+    "scheduler, expected",
+    [("pbs", DEFAULT_PBS), ("slurm", DEFAULT_SLURM)],
+    ids=["PBS", "SLURM"],
+)
 def test_default_files(scheduler, expected):
     assert create_scheduler_file(scheduler, Job([Command("echo 1")])) == expected
 

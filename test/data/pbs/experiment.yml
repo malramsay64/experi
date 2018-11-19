@@ -7,7 +7,7 @@ variables:
   var1: [1, 2, 3]
 
 pbs:
-  walltime: '30:00'
+  walltime: "30:00"
   cpus: 2
   memory: 2gb
   setup:
@@ -29,4 +29,4 @@ result: |
   "echo 3" \
   )
 
-  ${COMMAND[$PBS_ARRAY_INDEX]}
+  bash -c ${COMMAND[$PBS_ARRAY_INDEX]}
