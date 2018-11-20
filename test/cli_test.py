@@ -11,11 +11,11 @@
 import textwrap
 from pathlib import Path
 
+import pkg_resources
 import pytest
 from click.testing import CliRunner
 
 from experi.run import main
-import pkg_resources
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def runner():
 
 def test_version(runner):
     result = runner.invoke(main, ["--version"])
-    version = pkg_resources.get_distribution('experi').version
+    version = pkg_resources.get_distribution("experi").version
     assert version in result.output
 
 
@@ -42,7 +42,7 @@ def test_missing_input_file(runner):
         assert result.exit_code != 0
 
 
-@pytest.fixture(params=["", "pbs: True"], ids=["bash", "PBS"])
+@pytest.fixture()
 def test_file(request):
     return textwrap.dedent(
         f"""
@@ -53,26 +53,28 @@ def test_file(request):
 
         variables:
             var1: 0
-
-        {request.param}
     """
     )
 
 
-def test_dry_run(runner, test_file):
+@pytest.mark.parametrize("scheduler", ["pbs", "slurm", "shell"])
+def test_dry_run(runner, test_file, scheduler):
     with runner.isolated_filesystem():
         with open("experiment.yml", "w") as dst:
             dst.write(test_file)
 
-        result = runner.invoke(main, ["--dry-run"])
+        result = runner.invoke(main, ["--dry-run", "--scheduler", scheduler])
         print(result)
         assert result.exit_code == 0, result.exception
 
-        if "pbs" in test_file:
+        if scheduler == "pbs":
             print(result.output)
             assert "qsub" in result.output
             assert Path("experi_00.pbs").is_file()
-        else:
+        elif scheduler == "shell":
             print(result.output)
             assert "bash -c" in result.output
             assert not Path("experi_00.pbs").is_file()
+        elif scheduler == "slurm":
+            assert "sbatch" in result.output
+            assert Path("experi_00.slurm").is_file()

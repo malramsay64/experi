@@ -16,7 +16,7 @@ import sys
 from collections import ChainMap
 from itertools import chain, product, repeat
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Union
 
 import click
 import numpy as np
@@ -310,17 +310,22 @@ def process_structure(
     variables = list(variable_matrix(input_variables))
     assert variables
 
-    scheduler_options = None
-
     # Check for scheduler options
+    scheduler_options: Dict[str, YamlValue] = {}
+    if structure.get("scheduler"):
+        new_options = structure.get("scheduler")
+        assert new_options is not None
+        assert isinstance(new_options, dict)
+        scheduler_options.update(new_options)
     if structure.get(scheduler):
-        scheduler_options = structure.get(scheduler)
-        if scheduler_options is True:
-            scheduler_options = {}
-        assert isinstance(scheduler_options, dict)
-        if structure.get("name"):
-            # set the name attribute in scheduler to global name if no name defined
-            scheduler_options.setdefault("name", structure.get("name"))
+        new_options = structure.get(scheduler)
+        assert new_options is not None
+        assert isinstance(new_options, dict)
+        scheduler_options.update(new_options)
+    assert isinstance(scheduler_options, dict)
+    if structure.get("name"):
+        # set the name attribute in scheduler to global name if no name defined
+        scheduler_options.setdefault("name", structure.get("name"))
 
     jobs_dict = structure.get("jobs")
     if jobs_dict is None:
@@ -369,7 +374,7 @@ def run_bash_jobs(
     for job in jobs:
         # Check shell exists
         if shutil.which(job.shell) is None:
-            raise ProcessLookupError("The shell '{job.shell}' was not found.")
+            raise ProcessLookupError(f"The shell '{job.shell}' was not found.")
 
         failed = False
         for command in job:
@@ -507,12 +512,13 @@ def run_slurm_jobs(
     for index, job in enumerate(jobs):
         # Generate pbs file
         content = create_scheduler_file("slurm", job)
+        logger.debug("File contents:\n%s", content)
         # Write file to disk
         fname = Path(directory / "{}_{:02d}.slurm".format(basename, index))
         with fname.open("w") as dst:
             dst.write(content)
 
-        if submit_job:
+        if submit_job or dry_run:
             # Construct command
             submit_cmd = ["sbatch"]
 
@@ -540,28 +546,34 @@ def run_slurm_jobs(
                 break
 
 
-def process_scheduler(structure: Dict[str, Any]) -> str:
-    """Get the scheduler to run the jobs.
+def determine_scheduler(
+    scheduler: Optional[str], experiment_definition: Dict[str, YamlValue]
+) -> str:
+    """Determine the scheduler to use to run the jobs."""
 
-    Determine the shell to run the command from the input file. This checks for the
-    presence of keys in the input file corresponding to the different schedulers. The
-    schedulers that are supported are
+    # Scheduler value from command line has first priority
+    if scheduler is not None:
+        if scheduler in ["shell", "pbs", "slurm"]:
+            return scheduler
+        raise ValueError(
+            "Argument scheduler only supports input values of ['shell', 'pbs', 'slurm']"
+        )
 
-    - shell
-    - pbs, and
-    - slurm
-
-    listed in the order of precedence. The first scheduler with a truthy value in the
-    input file is the value returned by this function. Where no truthy values are found
-    the defualt value is "shell.
-
-    """
-    if structure.get("shell"):
-        return "shell"
-    if structure.get("pbs"):
+    # Next priority goes to the experiment.yml file
+    if experiment_definition.get("pbs"):
         return "pbs"
-    if structure.get("slurm"):
+    if experiment_definition.get("slurm"):
         return "slurm"
+    if experiment_definition.get("shell"):
+        return "shell"
+
+    # Final priority goes to the auto-discovery
+    if shutil.which("pbs") is not None:
+        return "pbs"
+    if shutil.which("slurm") is not None:
+        return "slurm"
+
+    # Default if nothing else is found goes to shell
     return "shell"
 
 
@@ -572,14 +584,16 @@ def _set_verbosity(ctx, param, value):
         logging.basicConfig(level=logging.DEBUG)
 
 
-def launch(input_file="experiment.yml", use_dependencies=False, dry_run=False) -> None:
+def launch(
+    input_file="experiment.yml", use_dependencies=False, dry_run=False, scheduler=None
+) -> None:
     # This function provides an API to access experi's functionality from within
     # python scripts, as an alternative to the command-line interface
 
     # Process and run commands
     input_file = Path(input_file)
     structure = read_file(input_file)
-    scheduler = process_scheduler(structure)
+    scheduler = determine_scheduler(scheduler, structure)
     jobs = process_structure(
         structure, scheduler, Path(input_file.parent), use_dependencies
     )
@@ -596,6 +610,13 @@ def launch(input_file="experiment.yml", use_dependencies=False, dry_run=False) -
     help="""Path to a YAML file containing experiment data. Note that the experiment
     will be run from the directory in which the file exists, not the directory the
     script was run from.""",
+)
+@click.option(
+    "-s",
+    "--scheduler",
+    type=click.Choice(["shell", "pbs", "slurm"]),
+    default=None,
+    help="The scheduler with which to run the jobs.",
 )
 @click.option(
     "--use-dependencies",
@@ -617,5 +638,5 @@ def launch(input_file="experiment.yml", use_dependencies=False, dry_run=False) -
     count=True,
     help="Increase the verbosity of logging events.",
 )
-def main(input_file, use_dependencies, dry_run) -> None:
-    launch(input_file, use_dependencies, dry_run)
+def main(input_file, use_dependencies, dry_run, scheduler) -> None:
+    launch(input_file, use_dependencies, dry_run, scheduler)

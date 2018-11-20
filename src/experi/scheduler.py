@@ -226,7 +226,7 @@ class SLURMOptions(SchedulerOptions):
         return resource_str
 
     def get_times(self) -> str:
-        return "#SBATCH --time {}\n".format(self.time.get("walltime"))
+        return "#SBATCH --time {}\n".format(self.time["walltime"])
 
     def get_project(self) -> str:
         if self.project:
@@ -251,7 +251,7 @@ class SLURMOptions(SchedulerOptions):
         return output
 
     def get_name(self) -> str:
-        return "#SBATCH --name {}\n".format(self.name)
+        return "#SBATCH --job-name {}\n".format(self.name)
 
     def get_mail(self) -> str:
         if self.email:

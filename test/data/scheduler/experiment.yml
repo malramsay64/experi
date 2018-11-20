@@ -1,0 +1,51 @@
+name: scheduler_test
+
+command:
+  - echo {var1}
+
+variables:
+  var1: [1, 2, 3]
+
+scheduler:
+  walltime: "30:00"
+  cpus: 2
+  memory: 2gb
+  setup:
+    - module load python
+
+result:
+  pbs: |
+    #!/bin/bash
+    #PBS -N scheduler_test
+    #PBS -l select=1:ncpus=2:mem=2gb
+    #PBS -l walltime=30:00
+    #PBS -J 0-2
+
+    cd "$PBS_O_WORKDIR"
+    module load python
+
+    COMMAND=( \
+    "echo 1" \
+    "echo 2" \
+    "echo 3" \
+    )
+
+    bash -c ${COMMAND[$PBS_ARRAY_INDEX]}
+  slurm: |
+    #!/bin/bash
+    #SBATCH --job-name scheduler_test
+    #SBATCH --cpus-per-task 2
+    #SBATCH --mem-per-task 2gb
+    #SBATCH --time 30:00
+    #SBATCH -J 0-2
+
+    cd "$SLURM_SUBMIT_DIR"
+    module load python
+
+    COMMAND=( \
+    "echo 1" \
+    "echo 2" \
+    "echo 3" \
+    )
+
+    bash -c ${COMMAND[$SLURM_ARRAY_TASK_ID]}
