@@ -14,7 +14,7 @@ from typing import Iterator
 import pytest
 
 from experi.commands import Command, Job
-from experi.run import determine_scheduler, launch, run_bash_jobs, run_pbs_jobs
+from experi.run import determine_scheduler, launch, run_bash_jobs
 
 
 @pytest.fixture
