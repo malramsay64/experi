@@ -476,7 +476,7 @@ def run_scheduler_jobs(
                         submit_cmd + [fname.name], cwd=str(directory)
                     )
                     prev_jobids.append(cmd_res.decode().strip())
-            except subprocess.CalledProcesError:
+            except subprocess.CalledProcessError:
                 logger.error("Submitting job to the queue failed.")
                 break
 
