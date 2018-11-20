@@ -348,10 +348,8 @@ def run_jobs(
 ) -> None:
     if scheduler == "shell":
         run_bash_jobs(jobs, directory, dry_run=dry_run)
-    elif scheduler == "pbs":
-        run_pbs_jobs(jobs, directory, dry_run=dry_run)
-    elif scheduler == "slurm":
-        run_slurm_jobs(jobs, directory, dry_run=dry_run)
+    elif scheduler in ["pbs", "slurm"]:
+        run_scheduler_jobs(scheduler, jobs, directory, dry_run=dry_run)
     else:
         raise ValueError(
             f"Scheduler '{scheduler}'was not recognised. Possible values are ['shell', 'pbs', 'slurm']"
@@ -395,7 +393,8 @@ def run_bash_jobs(
             return
 
 
-def run_pbs_jobs(
+def run_scheduler_jobs(
+    scheduler: str,
     jobs: Iterator[Job],
     directory: PathLike = Path.cwd(),
     basename: str = "experi",
@@ -416,12 +415,21 @@ def run_pbs_jobs(
 
     """
     submit_job = True
-    logger.debug("Creating commands in pbs files.")
-    # Check qsub exists
-    if shutil.which("qsub") is None:
+    logger.debug("Creating commands in %s files.", scheduler)
+
+    # Check scheduler submit command exists
+    if scheduler == "pbs":
+        submit_executable = "qsub"
+    elif scheduler == "slurm":
+        submit_executable = "sbatch"
+    else:
+        raise ValueError("scheduler can only take values ['pbs', 'slurm']")
+
+    if shutil.which(submit_executable) is None:
         logger.warning(
-            "The `qsub` command is not found."
-            "Skipping job submission and just generating files"
+            "The `%s` command is not found."
+            "Skipping job submission and just generating files",
+            submit_executable,
         )
         submit_job = False
 
@@ -429,29 +437,33 @@ def run_pbs_jobs(
     directory = Path(directory)
 
     # remove existing files
-    for fname in directory.glob(basename + "*.pbs"):
+    for fname in directory.glob(basename + f"*.{scheduler}"):
         print("Removing {}".format(fname))
         os.remove(str(fname))
 
     # Write new files and generate commands
     prev_jobids: List[str] = []
     for index, job in enumerate(jobs):
-        # Generate pbs file
-        content = create_scheduler_file("pbs", job)
+        # Generate scheduler file
+        content = create_scheduler_file(scheduler, job)
         logger.debug("File contents:\n%s", content)
         # Write file to disk
-        fname = Path(directory / "{}_{:02d}.pbs".format(basename, index))
+        fname = Path(directory / "{}_{:02d}.{}".format(basename, index, scheduler))
         with fname.open("w") as dst:
             dst.write(content)
 
         if submit_job or dry_run:
             # Construct command
-            submit_cmd = ["qsub"]
+            submit_cmd = [submit_executable]
 
             if prev_jobids:
                 # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
                 # with the first.
-                submit_cmd += ["-W", "depend=afterok:{} ".format(":".join(prev_jobids))]
+                afterok = f"afterok:{':'.join(prev_jobids)}"
+                if scheduler == "pbs":
+                    submit_cmd += ["-W", f"depend={afterok}"]
+                elif scheduler == "slurm":
+                    submit_cmd += ["--dependency", afterok]
 
             # actually run the command
             logger.info(str(submit_cmd))
@@ -464,84 +476,7 @@ def run_pbs_jobs(
                         submit_cmd + [fname.name], cwd=str(directory)
                     )
                     prev_jobids.append(cmd_res.decode().strip())
-            except subprocess.CalledProcessError:
-                logger.error("Submitting job to the queue failed.")
-                break
-
-
-def run_slurm_jobs(
-    jobs: Iterator[Job],
-    directory: PathLike = Path.cwd(),
-    basename: str = "experi",
-    dry_run: bool = False,
-) -> None:
-    """Submit a series of commands to the slurm batch scheduler.
-
-    This takes a list of strings which are the contents of the pbs files, writes the files to disk
-    and submits the job to the scheduler. Files which match the pattern of the resulting files
-    <basename>_<index>.pbs are deleted before writing the new files.
-
-    To ensure that commands run consecutively the aditional requirement to the run script `-W
-    depend=afterok:<prev_jobid>` is added. This allows for all the components of the experiment to
-    be conducted in a single script.
-
-    Note: Running this function requires that the command `qsub` exists, implying that a job
-    scheduler is installed.
-
-    """
-    submit_job = True
-    logger.debug("Creating commands in slurm files.")
-    # Check qsub exists
-    if shutil.which("sbatch") is None:
-        logger.warning(
-            "The `sbatch` command is not found."
-            "Skipping job submission and just generating files"
-        )
-        submit_job = False
-
-    # Ensure directory is a Path
-    directory = Path(directory)
-
-    # remove existing files
-    for fname in directory.glob(basename + "*.slurm"):
-        print("Removing {}".format(fname))
-        os.remove(str(fname))
-
-    # Write new files and generate commands
-    prev_jobids: List[str] = []
-    for index, job in enumerate(jobs):
-        # Generate pbs file
-        content = create_scheduler_file("slurm", job)
-        logger.debug("File contents:\n%s", content)
-        # Write file to disk
-        fname = Path(directory / "{}_{:02d}.slurm".format(basename, index))
-        with fname.open("w") as dst:
-            dst.write(content)
-
-        if submit_job or dry_run:
-            # Construct command
-            submit_cmd = ["sbatch"]
-
-            if prev_jobids:
-                # Continue to append all previous jobs to submit_cmd so subsequent jobs die along
-                # with the first.
-                submit_cmd += [
-                    "--dependency",
-                    "afterok:{} ".format(":".join(prev_jobids)),
-                ]
-
-            # acutally run the command
-            logger.info(str(submit_cmd))
-            try:
-                if dry_run:
-                    print(f"{submit_cmd} {fname.name}")
-                    prev_jobids.append("dry_run")
-                else:
-                    cmd_res = subprocess.check_output(
-                        submit_cmd + [fname.name], cwd=str(directory)
-                    )
-                    prev_jobids.append(cmd_res.decode().strip())
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcesError:
                 logger.error("Submitting job to the queue failed.")
                 break
 
