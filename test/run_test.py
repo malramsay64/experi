@@ -14,7 +14,7 @@ from typing import Iterator
 import pytest
 
 from experi.commands import Command, Job
-from experi.run import process_scheduler, run_bash_jobs, run_pbs_jobs
+from experi.run import determine_scheduler, launch, run_bash_jobs, run_pbs_jobs
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def test_bash_operators(tmp_dir, create_jobs, command):
     ],
 )
 def test_process_scheduler(structure):
-    assert process_scheduler(structure) == structure["result"]
+    assert determine_scheduler(None, structure) == structure["result"]
 
 
 def test_dependencies(tmp_dir):
@@ -107,3 +107,10 @@ def test_dry_run(tmp_dir):
     create_file = tmp_dir / "test"
     run_bash_jobs(jobs, tmp_dir, dry_run=True)
     assert not create_file.exists()
+
+
+@pytest.mark.parametrize("scheduler", ["pbs", "slurm", "shell"])
+@pytest.mark.parametrize("dry_run", [True, False])
+@pytest.mark.parametrize("use_dependencies", [True, False])
+def test_launch(scheduler, dry_run, use_dependencies):
+    launch("test/data/experiment.yml", use_dependencies, dry_run, scheduler)

@@ -31,7 +31,7 @@ bash -c ${COMMAND[$PBS_ARRAY_INDEX]}
 """
 
 DEFAULT_SLURM = """#!/bin/bash
-#SBATCH --name Experi_Job
+#SBATCH --job-name Experi_Job
 #SBATCH --cpus-per-task 1
 #SBATCH --time 1:00
 SLURM_ARRAY_TASK_ID=0
@@ -71,10 +71,11 @@ def test_default_files(scheduler, expected):
     assert create_scheduler_file(scheduler, Job([Command("echo 1")])) == expected
 
 
-def test_pbs_creation(tmp_dir):
-    structure = read_file("test/data/pbs/experiment.yml")
-    jobs = process_structure(structure, scheduler="pbs")
-    run_jobs(jobs, "pbs", tmp_dir)
-    expected = structure["result"]
-    with (tmp_dir / "experi_00.pbs").open("r") as result:
+@pytest.mark.parametrize("scheduler", ["pbs", "slurm"])
+def test_scheduler_creation(tmp_dir, scheduler):
+    structure = read_file("test/data/scheduler/experiment.yml")
+    jobs = process_structure(structure, scheduler=scheduler)
+    run_jobs(jobs, scheduler, tmp_dir)
+    expected = structure["result"][scheduler]
+    with (tmp_dir / f"experi_00.{scheduler}").open("r") as result:
         assert result.read().strip() == expected.strip()
