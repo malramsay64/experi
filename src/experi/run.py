@@ -324,8 +324,10 @@ def process_structure(
         scheduler_options.update(new_options)
     assert isinstance(scheduler_options, dict)
     if structure.get("name"):
+        name = structure.get("name")
+        assert isinstance(name, str)
         # set the name attribute in scheduler to global name if no name defined
-        scheduler_options.setdefault("name", structure.get("name"))
+        scheduler_options.setdefault("name", name)
 
     jobs_dict = structure.get("jobs")
     if jobs_dict is None:
