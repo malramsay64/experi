@@ -21,7 +21,7 @@ requirements:
 
   run:
     - {{ pin_compatible('python', max_pin='x.x') }}
-    - pyyaml
+    - pyyaml==5.*
     - click
 
 build:
