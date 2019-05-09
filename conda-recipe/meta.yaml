@@ -20,12 +20,12 @@ requirements:
 
 
   run:
-    - {{ pin_compatible('python', max_pin='x.x') }}
-    - pyyaml==5.*
+    - python
+    - pyyaml
     - click
 
 build:
-  number: 0
+  number: 2
   noarch: python
   script: python setup.py install --single-version-externally-managed --record=record.txt
   entry_points:
