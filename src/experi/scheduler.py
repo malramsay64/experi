@@ -30,7 +30,7 @@ cd "{workdir}"
 
 COMMAND={command_list}
 
-bash -c ${{COMMAND[{array_index}]}}
+${{COMMAND[{array_index}]}}
 """
 
 

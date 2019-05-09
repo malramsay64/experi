@@ -27,7 +27,7 @@ COMMAND=( \\
 "echo 1" \\
 )
 
-bash -c ${COMMAND[$PBS_ARRAY_INDEX]}
+${COMMAND[$PBS_ARRAY_INDEX]}
 """
 
 DEFAULT_SLURM = """#!/bin/bash
@@ -43,7 +43,7 @@ COMMAND=( \\
 "echo 1" \\
 )
 
-bash -c ${COMMAND[$SLURM_ARRAY_TASK_ID]}
+${COMMAND[$SLURM_ARRAY_TASK_ID]}
 """
 
 

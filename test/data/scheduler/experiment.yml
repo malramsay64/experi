@@ -30,7 +30,7 @@ result:
     "echo 3" \
     )
 
-    bash -c ${COMMAND[$PBS_ARRAY_INDEX]}
+    ${COMMAND[$PBS_ARRAY_INDEX]}
   slurm: |
     #!/bin/bash
     #SBATCH --job-name scheduler_test
@@ -48,4 +48,4 @@ result:
     "echo 3" \
     )
 
-    bash -c ${COMMAND[$SLURM_ARRAY_TASK_ID]}
+    ${COMMAND[$SLURM_ARRAY_TASK_ID]}
