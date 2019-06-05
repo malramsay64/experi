@@ -30,6 +30,7 @@ result:
     "echo 3" \
     )
 
+    echo "${COMMAND[$PBS_ARRAY_INDEX]}"
     ${COMMAND[$PBS_ARRAY_INDEX]}
   slurm: |
     #!/bin/bash
@@ -48,4 +49,5 @@ result:
     "echo 3" \
     )
 
+    echo "${COMMAND[$SLURM_ARRAY_TASK_ID]}"
     ${COMMAND[$SLURM_ARRAY_TASK_ID]}

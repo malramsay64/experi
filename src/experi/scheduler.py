@@ -30,6 +30,7 @@ cd "{workdir}"
 
 COMMAND={command_list}
 
+echo "${{COMMAND[{array_index}]}}"
 ${{COMMAND[{array_index}]}}
 """
 

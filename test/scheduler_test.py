@@ -27,6 +27,7 @@ COMMAND=( \\
 "echo 1" \\
 )
 
+echo "${COMMAND[$PBS_ARRAY_INDEX]}"
 ${COMMAND[$PBS_ARRAY_INDEX]}
 """
 
@@ -43,6 +44,7 @@ COMMAND=( \\
 "echo 1" \\
 )
 
+echo "${COMMAND[$SLURM_ARRAY_TASK_ID]}"
 ${COMMAND[$SLURM_ARRAY_TASK_ID]}
 """
 
