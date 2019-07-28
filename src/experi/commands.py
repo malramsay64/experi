@@ -33,7 +33,11 @@ class Command:
         creates: str = "",
         requires: str = "",
     ) -> None:
-        self.cmd = cmd
+        if isinstance(cmd, str):
+            self.cmd = [cmd]
+        else:
+            self.cmd = cmd
+
         if variables is not None:
             self.variables = variables
         else:
