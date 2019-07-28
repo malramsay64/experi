@@ -115,10 +115,10 @@
         },
         "black": {
             "hashes": [
-                "sha256:817243426042db1d36617910df579a54f1afd659adb96fc5032fcf4b36209739",
-                "sha256:e030a9a28f542debc08acceb273f228ac422798e5215ba2a791a6ddeaaca22a5"
+                "sha256:09a9dcb7c46ed496a9850b76e4e825d6049ecd38b611f1224857a79bd985a8cf",
+                "sha256:68950ffd4d9169716bcb8719a56c07a2f4485354fec061cdd5910aa07369731c"
             ],
-            "version": "==18.9b0"
+            "version": "==19.3b0"
         },
         "certifi": {
             "hashes": [
@@ -189,10 +189,10 @@
         },
         "hypothesis": {
             "hashes": [
-                "sha256:ea90434a4ad920cc39a69a4f320b9e649eb09308865677e62f5bcd3101e86d66",
-                "sha256:ee0ad8885964ffb8a5a00c0bac76b9e0576fc033e32b38c050a3559ffd48ebf9"
+                "sha256:0717f695ec78792019071f960767fb4ff8b3eca84210118be02d782304a40b1d",
+                "sha256:52caa962b1d05687a55820b0062ba39381f6307aee354d69618b1b677d6afaf5"
             ],
-            "version": "==4.31.0"
+            "version": "==4.32.0"
         },
         "idna": {
             "hashes": [
@@ -210,10 +210,10 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:6dfd58dfe281e8d240937776065dd3624ad5469c835248219bd16cf2e12dbeb7",
-                "sha256:cb6ee23b46173539939964df59d3d72c3e0c1b5d54b84f1d8a7e912fe43612db"
+                "sha256:23d3d873e008a513952355379d93cbcab874c58f4f034ff657c7a87422fa64e8",
+                "sha256:80d2de76188eabfbfcf27e6a37342c2827801e59c4cc14b0371c56fed43820e3"
             ],
-            "version": "==0.18"
+            "version": "==0.19"
         },
         "isort": {
             "hashes": [
