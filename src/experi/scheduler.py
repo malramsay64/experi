@@ -13,6 +13,7 @@ from the list of commands. The variables will be generated and iterated over usi
 job array feature of pbs. """
 
 import logging
+from pathlib import Path
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
@@ -70,6 +71,10 @@ class SchedulerOptions(ABC):
                 self.project = value
             elif key in ["log", "logs", "output"]:
                 self.log_dir = value
+                log_path = Path(self.log_dir)
+                if not log_path.exists():
+                    logger.info("Logging directory %s does not exist, creating", log_path)
+                    log_path.mkdir()
             elif key in ["email", "mail"]:
                 if isinstance(value, list):
                     self.email = ",".join(value)
