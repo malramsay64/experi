@@ -24,7 +24,7 @@ dev_require = [
     "mypy",
     "pylint",
     "pytest",
-    "black==18.9b0",
+    "black==19.3b0",
     "coverage",
     "pytest-cov",
     "hypothesis",
