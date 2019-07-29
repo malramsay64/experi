@@ -83,6 +83,7 @@ class SchedulerOptions(ABC):
 
         header_string += self.get_name()
         header_string += self.get_resources()
+        header_string += self.get_project()
         header_string += self.get_times()
         header_string += self.get_logging()
         header_string += self.get_mail()
@@ -95,6 +96,10 @@ class SchedulerOptions(ABC):
 
     @abstractmethod
     def get_resources(self):
+        pass
+
+    @abstractmethod
+    def get_project(self):
         pass
 
     @abstractmethod
@@ -154,6 +159,7 @@ class ShellOptions(SchedulerOptions):
         header_string += self.get_name()
         header_string += self.get_resources()
         header_string += self.get_times()
+        header_string += self.get_project()
         header_string += self.get_logging()
         header_string += self.get_mail()
         header_string += self.get_arbitrary_keys()

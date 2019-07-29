@@ -5,6 +5,8 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name
 
 """Test the building of scheduler files."""
 
@@ -12,7 +14,12 @@ import pytest
 
 from experi.commands import Command, Job
 from experi.run import process_structure, read_file, run_jobs
-from experi.scheduler import create_scheduler_file
+from experi.scheduler import (
+    PBSOptions,
+    ShellOptions,
+    SLURMOptions,
+    create_scheduler_file,
+)
 
 DEFAULT_PBS = """#!/bin/bash
 #PBS -N Experi_Job
@@ -81,3 +88,21 @@ def test_scheduler_creation(tmp_dir, scheduler):
     expected = structure["result"][scheduler]
     with (tmp_dir / f"experi_00.{scheduler}").open("r") as result:
         assert result.read().strip() == expected.strip()
+
+
+@pytest.fixture(params=["pbs", "slurm", "shell"])
+def scheduler(request):
+    schedulers = {"pbs": PBSOptions, "slurm": SLURMOptions, "shell": ShellOptions}
+    return schedulers.get(request.param)
+
+
+class TestHeader:
+    def test_project(self, scheduler):
+        project_name = "My Project"
+        sched = scheduler(project=project_name)
+        assert project_name in sched.create_header()
+
+    def test_mail(self, scheduler):
+        email = "email@example.com"
+        sched = scheduler(mail=email)
+        assert email in sched.create_header()
