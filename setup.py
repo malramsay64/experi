@@ -21,13 +21,13 @@ with open("README.md") as f:
 
 install_require = ["click", "pyyaml>=5.0", "numpy"]
 dev_require = [
-    "mypy",
-    "pylint",
-    "pytest",
+    "mypy==0.740",
+    "pylint==2.4.3",
+    "pytest==5.2.2",
     "black==19.3b0",
-    "coverage",
-    "pytest-cov",
-    "hypothesis",
+    "coverage==4.5.4",
+    "pytest-cov==2.8.1",
+    "hypothesis==4.42.0",
     "attrs>=19.2",
 ]
 docs_require = ["sphinx", "sphinx-autobuild", "sphinx-rtd-theme", "sphinx-click"]
