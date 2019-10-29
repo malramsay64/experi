@@ -73,7 +73,9 @@ class SchedulerOptions(ABC):
                 self.log_dir = value
                 log_path = Path(self.log_dir)
                 if not log_path.exists():
-                    logger.info("Logging directory %s does not exist, creating", log_path)
+                    logger.info(
+                        "Logging directory %s does not exist, creating", log_path
+                    )
                     log_path.mkdir()
             elif key in ["email", "mail"]:
                 if isinstance(value, list):

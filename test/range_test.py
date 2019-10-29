@@ -40,7 +40,7 @@ def get_ranges():
                 start: 1.
                 stop: 10
             """,
-            list(np.arange(1., 10)),
+            list(np.arange(1.0, 10)),
         ),
         (
             """
@@ -82,9 +82,9 @@ def create_string(start, stop, step, dtype):
 
 
 # No none in start to remove conditional in test
-@pytest.mark.parametrize("start", [1, 10, 10.])
-@pytest.mark.parametrize("stop", [2, 20, 20.])
-@pytest.mark.parametrize("step", [1, 10, 10.])
+@pytest.mark.parametrize("start", [1, 10, 10.0])
+@pytest.mark.parametrize("stop", [2, 20, 20.0])
+@pytest.mark.parametrize("step", [1, 10, 10.0])
 @pytest.mark.parametrize("dtype", ["float", "int"])
 def test_values(start, stop, step, dtype):
     result = parse_string(create_string(start, stop, step, dtype))
