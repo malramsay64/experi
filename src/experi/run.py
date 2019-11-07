@@ -380,9 +380,10 @@ def run_bash_jobs(
         for command in job:
             for cmd in command:
                 logger.info(cmd)
-                if dry_run:
-                    print(f"{job.shell} -c '{cmd}'")
-                else:
+                # Print command to terminal
+                print(f"{job.shell} -c '{cmd}'")
+
+                if not dry_run:
                     result = subprocess.run(
                         [job.shell, "-c", f"{cmd}"], cwd=str(directory)
                     )
