@@ -18,18 +18,33 @@ variables:
       - 24
 
 result: |
+  bash -c 'echo 1 10 20'
   1 10 20
+  bash -c 'echo 2 10 20'
   2 10 20
+  bash -c 'echo 3 10 20'
   3 10 20
+  bash -c 'echo 4 10 20'
   4 10 20
+  bash -c 'echo 5 10 20'
   5 10 20
+  bash -c 'echo 1 11 22'
   1 11 22
+  bash -c 'echo 2 11 22'
   2 11 22
+  bash -c 'echo 3 11 22'
   3 11 22
+  bash -c 'echo 4 11 22'
   4 11 22
+  bash -c 'echo 5 11 22'
   5 11 22
+  bash -c 'echo 1 12 24'
   1 12 24
+  bash -c 'echo 2 12 24'
   2 12 24
+  bash -c 'echo 3 12 24'
   3 12 24
+  bash -c 'echo 4 12 24'
   4 12 24
+  bash -c 'echo 5 12 24'
   5 12 24
