@@ -21,7 +21,7 @@ with open("README.md") as f:
 
 install_require = ["click", "pyyaml>=5.0", "numpy"]
 dev_require = [
-    "mypy==0.750",
+    "mypy==0.761",
     "pylint==2.4.3",
     "pytest==5.2.2",
     "black==19.10b0",
