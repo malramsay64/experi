@@ -26,7 +26,7 @@ dev_require = [
     "pytest==5.3.2",
     "black==19.10b0",
     "coverage==5.0.3",
-    "pytest-cov==2.8.1",
+    "pytest-cov==2.10.0",
     "hypothesis>=4.42.0,<6.0",
     "attrs>=19.2",
 ]
