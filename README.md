@@ -1,7 +1,7 @@
 Experi
 ======
 
-
+[![DOI](https://zenodo.org/badge/117495677.svg)](https://zenodo.org/badge/latestdoi/117495677)
 [![Build Status](https://travis-ci.org/malramsay64/experi.svg?branch=master)](https://travis-ci.org/malramsay64/experi)
 [![codecov](https://codecov.io/gh/malramsay64/experi/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/experi)
 ![PyPI](https://img.shields.io/pypi/v/experi.svg)
