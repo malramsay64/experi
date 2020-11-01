@@ -23,7 +23,7 @@ install_require = ["click", "pyyaml>=5.0", "numpy"]
 dev_require = [
     "mypy==0.761",
     "pylint==2.4.4",
-    "pytest==5.3.2",
+    "pytest==6.1.2",
     "black==19.10b0",
     "coverage==5.0.3",
     "pytest-cov==2.8.1",
