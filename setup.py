@@ -27,7 +27,7 @@ dev_require = [
     "black==19.10b0",
     "coverage==5.0.3",
     "pytest-cov==2.8.1",
-    "hypothesis>=4.42.0,<6.0",
+    "hypothesis>=4.42.0,<7.0",
     "attrs>=19.2",
 ]
 docs_require = ["sphinx", "sphinx-autobuild", "sphinx-rtd-theme", "sphinx-click"]
